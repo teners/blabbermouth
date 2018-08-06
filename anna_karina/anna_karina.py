@@ -5,8 +5,7 @@ import datetime
 import telepot
 
 from telepot.aio.loop import MessageLoop
-from telepot.aio.delegate import (per_chat_id, create_open, pave_event_space,
-                                  include_callback_query_chat_id)
+from telepot.aio.delegate import per_chat_id, create_open, pave_event_space
 
 import deaf_detector
 import query_detector
@@ -37,11 +36,9 @@ def main():
             sort_type=top_reddit_post.SortType.HOT,
             period=datetime.timedelta(hours=4),
             user_agent=USER_AGENT,
-            personal_query_detector=query_detector.personal_query_detector(
-                USERNAME),
+            personal_query_detector=query_detector.personal_query_detector(USERNAME),
             timeout=10),
-        pave_event_space()(
-            per_chat_id(), create_open, deaf_detector.DeafDetector, timeout=10)
+        pave_event_space()(per_chat_id(), create_open, deaf_detector.DeafDetector, timeout=10),
     ])
 
     loop = asyncio.get_event_loop()

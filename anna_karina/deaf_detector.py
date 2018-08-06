@@ -4,8 +4,7 @@ import telepot
 
 
 class DeafDetector(telepot.aio.helper.ChatHandler):
-    WHAT_REGEX = re.compile('^[ч|ш]т?[о|а|ё](\s(блять|бля|нахуй))?\.?$',
-                            re.IGNORECASE)
+    WHAT_REGEX = re.compile('^[ч|ш]т?[о|а|ё](\s(блять|бля|нахуй))?\.?$', re.IGNORECASE)
 
     TO_THIRD_CONVERSION_MAP = {
         'я': 'Он',
@@ -33,11 +32,9 @@ class DeafDetector(telepot.aio.helper.ChatHandler):
         user = message['from']['username']
 
         if self._previous_message is not None and re.match(
-                self.WHAT_REGEX,
-                text) is not None and user != self._previous_sender:
+                self.WHAT_REGEX, text) is not None and user != self._previous_sender:
             await self.sender.sendMessage(
-                self._reply_to_deaf(self._previous_message, user),
-                parse_mode='Markdown')
+                self._reply_to_deaf(self._previous_message, user), parse_mode='Markdown')
             self._previous_message = None
             self._previous_sender = None
         else:
@@ -47,14 +44,10 @@ class DeafDetector(telepot.aio.helper.ChatHandler):
     def on__idle(self, _):
         print('[DeafDetector] Ignoring on__idle')
 
-
     def _reply_to_deaf(self, previous_message, deaf_user):
         print('[DeafDetector] Replying to {}'.format(deaf_user))
 
-        reply = [
-            self._convert_to_third(word)
-            for word in previous_message.split(' ')
-        ]
+        reply = [self._convert_to_third(word) for word in previous_message.split(' ')]
         return '_{}_'.format(' '.join(reply))
 
     def _convert_to_third(self, word):

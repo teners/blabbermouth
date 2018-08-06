@@ -64,8 +64,7 @@ class TopRedditPost(telepot.aio.helper.ChatHandler):
         'cooking',
     ]
 
-    def __init__(self, *args, sort_type, period, user_agent,
-                 personal_query_detector, **kwargs):
+    def __init__(self, *args, sort_type, period, user_agent, personal_query_detector, **kwargs):
         super(TopRedditPost, self).__init__(*args, **kwargs)
 
         self._sort_type = sort_type
@@ -115,15 +114,13 @@ class TopRedditPost(telepot.aio.helper.ChatHandler):
         print('[TopRedditPost] Looking up top post')
 
         subreddit = random.choice(self.SUBREDDITS_OF_INTEREST)
-        url = '{}/r/{}/{}.json?limit=1'.format(self.REDDIT_URL, subreddit,
-                                               self._sort_type.value)
+        url = '{}/r/{}/{}.json?limit=1'.format(self.REDDIT_URL, subreddit, self._sort_type.value)
 
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 response_text = await response.text()
                 if response.status != 200:
-                    raise Exception('Got unwanted response {}: {}',
-                                    response.status, response_text)
+                    raise Exception('Got unwanted response {}: {}', response.status, response_text)
 
         response = json.loads(response_text)
         top_post = response['data']['children'][-1]['data']['permalink']
