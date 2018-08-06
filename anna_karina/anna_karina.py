@@ -34,10 +34,11 @@ def main():
             per_chat_id(),
             create_open,
             top_reddit_post.TopRedditPost,
-            top_reddit_post.SortType.HOT,
-            datetime.timedelta(hours=4),
-            USER_AGENT,
-            query_detector.personal_query_detector(USERNAME),
+            sort_type=top_reddit_post.SortType.HOT,
+            period=datetime.timedelta(hours=4),
+            user_agent=USER_AGENT,
+            personal_query_detector=query_detector.personal_query_detector(
+                USERNAME),
             timeout=10),
         pave_event_space()(
             per_chat_id(), create_open, deaf_detector.DeafDetector, timeout=10)

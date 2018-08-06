@@ -64,9 +64,9 @@ class TopRedditPost(telepot.aio.helper.ChatHandler):
         'cooking',
     ]
 
-    def __init__(self, tp, sort_type, period, user_agent,
+    def __init__(self, *args, sort_type, period, user_agent,
                  personal_query_detector, **kwargs):
-        super(TopRedditPost, self).__init__(tp, **kwargs)
+        super(TopRedditPost, self).__init__(*args, **kwargs)
 
         self._sort_type = sort_type
         self._period = period
