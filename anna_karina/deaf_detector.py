@@ -44,6 +44,10 @@ class DeafDetector(telepot.aio.helper.ChatHandler):
             self._previous_message = text
             self._previous_sender = user
 
+    def on__idle(self, _):
+        print('[DeafDetector] Ignoring on__idle')
+
+
     def _reply_to_deaf(self, previous_message, deaf_user):
         print('[DeafDetector] Replying to {}'.format(deaf_user))
 
