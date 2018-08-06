@@ -8,9 +8,9 @@ from telepot.aio.loop import MessageLoop
 from telepot.aio.delegate import (per_chat_id, create_open, pave_event_space,
                                   include_callback_query_chat_id)
 
+import deaf_detector
 import query_detector
 import top_reddit_post
-import deaf_detector
 
 USER_AGENT = 'linux:anna-karina-bot:1.0 (by /u/subsinthe)'
 USERNAME = 'anna_karina_bot'
