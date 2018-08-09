@@ -7,6 +7,7 @@ import telepot
 from telepot.aio.loop import MessageLoop
 from telepot.aio.delegate import per_chat_id, create_open, pave_event_space
 
+import chatter
 import deaf_detector
 import query_detector
 import top_reddit_post
@@ -28,6 +29,13 @@ def main():
     if args.proxy:
         telepot.aio.api.set_proxy(args.proxy)
 
+    knowledge_base = chatter.MongoKnowledgeBase(host='localhost', port=27017)
+    intelligence_core = chatter.MarkovChainIntellegenceCore(
+        knowledge_base=knowledge_base,
+        average_sentence_length=150,
+        sentence_length_deviation=50,
+        knowledge_timeout=datetime.timedelta(hours=1))
+
     bot = telepot.aio.DelegatorBot(args.token, [
         pave_event_space()(
             per_chat_id(),
@@ -39,6 +47,20 @@ def main():
             personal_query_detector=query_detector.personal_query_detector(USERNAME),
             timeout=10),
         pave_event_space()(per_chat_id(), create_open, deaf_detector.DeafDetector, timeout=10),
+        pave_event_space()(
+            per_chat_id(),
+            create_open,
+            chatter.LearningEngine,
+            knowledge_base=knowledge_base,
+            bot_name=USERNAME,
+            timeout=10),
+        pave_event_space()(
+            per_chat_id(),
+            create_open,
+            chatter.AnswerEngine,
+            intelligence_core=intelligence_core,
+            bot_name=USERNAME,
+            timeout=10),
     ])
 
     loop = asyncio.get_event_loop()
