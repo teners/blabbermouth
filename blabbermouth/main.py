@@ -29,7 +29,7 @@ def main():
     if args.proxy:
         telepot.aio.api.set_proxy(args.proxy)
 
-    knowledge_base = chatter.MongoKnowledgeBase(host='localhost', port=27017)
+    knowledge_base = chatter.MongoKnowledgeBase(host='localhost', port=27018)
     intelligence_core = chatter.MarkovChainIntellegenceCore(
         knowledge_base=knowledge_base,
         average_sentence_length=150,
