@@ -1,9 +1,9 @@
 import abc
-import attr
 import enum
 import random
 import time
 
+import attr
 import pymongo
 import markovify
 import telepot
