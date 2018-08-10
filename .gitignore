@@ -1,3 +1,4 @@
 .vimrc
 .vim-env
+*.swp
 __pycache__
