@@ -79,7 +79,7 @@ class CachedMarkovText:
             self.text = markovify.Text(knowledge)
             self.knowledge_timeout.reset()
 
-        sentence = self.text.make_sentence()
+        sentence = self.text.make_sentence(tries=100)
 
         if sentence is None:
             print('[CachedMarkovText]: Failed to build markov text')
