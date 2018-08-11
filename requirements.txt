@@ -2,6 +2,8 @@ flake8
 pylint
 yapf
 
+jinja2
 markovify
 pymongo
+pyyaml
 telepot

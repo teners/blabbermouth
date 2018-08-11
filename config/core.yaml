@@ -1,0 +1,2 @@
+proxy: http://localhost:8123
+user_agent: {{platform}}:{{app_name}}:{{bot_name}}:{{app_version}}

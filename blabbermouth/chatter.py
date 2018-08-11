@@ -28,24 +28,24 @@ class KnowledgeBase(abc.ABC):
 
 
 class MongoKnowledgeBase(KnowledgeBase):
-    def __init__(self, host, port):
+    def __init__(self, host, port, db_name, db_collection):
         self._client = pymongo.MongoClient(host, port)
-        self._db = self._client.telegram_knowledge_base
+        self._collection = self._client[db_name][db_collection]
 
     def record(self, chat_id, user, text):
         doc = {'chat_id': chat_id, 'user': user, 'text': text}
-        self._db.telegram_chat_source.insert_one(doc)
+        self._collection.insert_one(doc)
 
     def produce_selection_by_chat(self, chat_id):
-        for item in self._db.telegram_chat_source.find({'chat_id': chat_id}):
+        for item in self._collection.find({'chat_id': chat_id}):
             yield item['text'].replace('\n', '. ')
 
     def produce_selection_by_user(self, user):
-        for item in self._db.telegram_chat_source.find({'user': user}):
+        for item in self._collection.find({'user': user}):
             yield item['text'].replace('\n', '. ')
 
     def produce_selection_by_full_knowledge(self):
-        for item in self._db.telegram_chat_source.find():
+        for item in self._collection.find():
             yield item['text'].replace('\n', '. ')
 
 
@@ -71,6 +71,7 @@ class Timeout:
 class CachedMarkovText:
     knowledge_source = attr.ib()
     knowledge_timeout = attr.ib(converter=Timeout)
+    make_sentence_attempts = attr.ib(int)
     text = attr.ib(default=None)
 
     def make_sentence(self, **source_args):
@@ -79,7 +80,7 @@ class CachedMarkovText:
             self.text = markovify.Text(knowledge)
             self.knowledge_timeout.reset()
 
-        sentence = self.text.make_sentence(tries=100)
+        sentence = self.text.make_sentence(tries=self.make_sentence_attempts)
 
         if sentence is None:
             print('[CachedMarkovText]: Failed to build markov text')
@@ -93,18 +94,19 @@ class MarkovChainIntellegenceCore(IntellegenceCore):
         BY_CURRENT_USER = enum.auto()
         BY_FULL_KNOWLEDGE = enum.auto()
 
-    ANSWER_PLACEHOLDER = 'Лол'
-
-    def __init__(self, knowledge_base, average_sentence_length, sentence_length_deviation, knowledge_timeout):
+    def __init__(self, knowledge_base, knowledge_lifespan, make_sentence_attempts, answer_placeholder):
         if not isinstance(knowledge_base, KnowledgeBase):
             raise TypeError('knowledge_base must be KnowledgeBase')
 
+        self._answer_placeholder = answer_placeholder
         self._strategies = list(self.Strategy)
-        self._average_sentence_length = average_sentence_length
-        self._sentence_length_deviation = sentence_length_deviation
 
         self._markov_texts_by_strategy = {
-            p[0]: CachedMarkovText(knowledge_source=p[1], knowledge_timeout=knowledge_timeout)
+            p[0]: CachedMarkovText(
+                knowledge_source=p[1],
+                knowledge_timeout=knowledge_lifespan,
+                make_sentence_attempts=make_sentence_attempts,
+            )
             for p in [
                 (self.Strategy.BY_CURRENT_CHAT,
                  lambda **kwargs: knowledge_base.produce_selection_by_chat(kwargs['chat_id'])),
@@ -122,7 +124,7 @@ class MarkovChainIntellegenceCore(IntellegenceCore):
 
         sentence = self._markov_texts_by_strategy[strategy].make_sentence(
             chat_id=chat_id, user=user, text=text)
-        return sentence if sentence is not None else self.ANSWER_PLACEHOLDER
+        return sentence if sentence is not None else self._answer_placeholder
 
 
 class LearningEngine(telepot.aio.helper.ChatHandler):
