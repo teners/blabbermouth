@@ -7,11 +7,10 @@ import telepot
 from telepot.aio.loop import MessageLoop
 from telepot.aio.delegate import per_chat_id, create_open, pave_event_space
 
-import chatter
-import config
-import deaf_detector
-import query_detector
-import top_reddit_post
+from interface import answer_engine, deaf_detector, learning_engine, top_reddit_post
+from util import config, query_detector
+from intellegence.markov_chain_intellegence_core import MarkovChainIntellegenceCore
+from intellegence.mongo_knowledge_base import MongoKnowledgeBase
 
 
 def parse_args():
@@ -31,13 +30,13 @@ def main():
 
     telepot.aio.api.set_proxy(conf['core']['proxy'])
 
-    knowledge_base = chatter.MongoKnowledgeBase(
+    knowledge_base = MongoKnowledgeBase(
         host=conf['mongo_knowledge_base']['db_host'],
         port=conf['mongo_knowledge_base']['db_port'],
         db_name=conf['mongo_knowledge_base']['db_name'],
         db_collection=conf['mongo_knowledge_base']['db_collection'],
     )
-    intelligence_core = chatter.MarkovChainIntellegenceCore(
+    intelligence_core = MarkovChainIntellegenceCore(
         knowledge_base=knowledge_base,
         knowledge_lifespan=datetime.timedelta(
             minutes=conf['markov_chain_intellegence_core']['knowledge_lifespan_minutes']),
@@ -65,14 +64,14 @@ def main():
         pave_event_space()(
             per_chat_id(),
             create_open,
-            chatter.LearningEngine,
+            learning_engine.LearningEngine,
             knowledge_base=knowledge_base,
             bot_name=bot_name,
             timeout=telepot_http_timeout),
         pave_event_space()(
             per_chat_id(),
             create_open,
-            chatter.AnswerEngine,
+            answer_engine.AnswerEngine,
             intelligence_core=intelligence_core,
             bot_name=bot_name,
             timeout=telepot_http_timeout),

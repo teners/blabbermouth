@@ -16,3 +16,15 @@ def personal_query_detector(identity):
         return match.group(1)
 
     return detector
+
+
+def self_reference_detector(identity):
+    self_reference = '@{}'.format(identity)
+
+    def detector(message):
+        text = message.get('text')
+        if text is None:
+            return None
+        return self_reference in text
+
+    return detector

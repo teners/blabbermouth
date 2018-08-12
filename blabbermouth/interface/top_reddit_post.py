@@ -3,10 +3,9 @@ import json
 import random
 
 import aiohttp
-
 import telepot
 
-import timer
+from util.timer import Timer
 
 
 class SortType(enum.Enum):
@@ -102,7 +101,7 @@ class TopRedditPost(telepot.aio.helper.ChatHandler):
     async def _start_listening(self):
         print('[TopRedditPost] _start_listening()')
 
-        self._timer = timer.Timer(self._period, self._lookup_top_post)
+        self._timer = Timer(self._period, self._lookup_top_post)
 
     async def _stop_listening(self):
         print('[TopRedditPost] _stop_listening()')
