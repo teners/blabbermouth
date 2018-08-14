@@ -66,6 +66,7 @@ def main():
             create_open,
             learning_engine.LearningEngine,
             knowledge_base=knowledge_base,
+            self_reference_detector=query_detector.self_reference_detector(bot_name),
             bot_name=bot_name,
             timeout=telepot_http_timeout),
         pave_event_space()(
@@ -73,7 +74,7 @@ def main():
             create_open,
             answer_engine.AnswerEngine,
             intelligence_core=intelligence_core,
-            bot_name=bot_name,
+            self_reference_detector=query_detector.self_reference_detector(bot_name),
             timeout=telepot_http_timeout),
     ])
 

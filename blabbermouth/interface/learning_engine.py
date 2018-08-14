@@ -4,15 +4,15 @@ from intellegence.knowledge_base import KnowledgeBase
 
 
 class LearningEngine(telepot.aio.helper.ChatHandler):
-    def __init__(self, *args, knowledge_base, bot_name, **kwargs):
+    def __init__(self, *args, knowledge_base, self_reference_detector, bot_name, **kwargs):
         if not isinstance(knowledge_base, KnowledgeBase):
             raise TypeError('knowledge_base must be KnowledgeBase')
 
         super(LearningEngine, self).__init__(*args, **kwargs)
 
         self._knowledge_base = knowledge_base
+        self._self_reference_detector = self_reference_detector
         self._bot_name = bot_name
-        self._self_reference = '@{}'.format(bot_name)
 
         print('[LearningEngine] Created {}'.format(id(self)))
 
@@ -20,8 +20,7 @@ class LearningEngine(telepot.aio.helper.ChatHandler):
         text = message.get('text')
         if text is None:
             return
-
-        if self._is_talking_to_me(text):
+        if self._self_reference_detector(message):
             return
 
         user = message['from']['username']
@@ -34,6 +33,3 @@ class LearningEngine(telepot.aio.helper.ChatHandler):
 
     def on__idle(self, _):
         print('[LearningEngine] Ignoring on__idle')
-
-    def _is_talking_to_me(self, text):
-        return self._self_reference in text
