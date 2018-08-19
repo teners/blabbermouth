@@ -24,7 +24,7 @@ def self_reference_detector(identity):
     def detector(message):
         reply = message.get("reply_to_message")
         if reply is not None:
-            return reply["from"]["username"] == identity
+            return reply.get("from", {}).get("username") == identity
 
         text = message.get("text")
         if text is None:
