@@ -3,7 +3,7 @@ import telepot
 from blabbermouth.intellegence.intellegence_core import IntellegenceCore
 
 
-class AnswerEngine(telepot.aio.helper.ChatHandler):
+class AnswerEngineHandler(telepot.aio.helper.ChatHandler):
     def __init__(self, *args, intelligence_core, self_reference_detector, **kwargs):
         if not isinstance(intelligence_core, IntellegenceCore):
             raise TypeError("intelligence_core must be IntellegenceCore")

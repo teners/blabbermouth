@@ -8,9 +8,9 @@ from telepot.aio.loop import MessageLoop
 from telepot.aio.delegate import per_chat_id, create_open, pave_event_space
 
 from interface import answer_engine, deaf_detector, learning_engine, top_reddit_post
-from util import config, query_detector
 from intellegence.markov_chain_intellegence_core import MarkovChainIntellegenceCore
 from intellegence.mongo_knowledge_base import MongoKnowledgeBase
+from util import config, query_detector
 
 
 def parse_args():
@@ -53,7 +53,7 @@ def main():
             pave_event_space()(
                 per_chat_id(),
                 create_open,
-                top_reddit_post.TopRedditPost,
+                top_reddit_post.TopRedditPostHandler,
                 sort_type=top_reddit_post.SortType.HOT,
                 period=datetime.timedelta(hours=conf["reddit_browser"]["query_period_hours"]),
                 user_agent=user_agent,
@@ -61,12 +61,12 @@ def main():
                 timeout=telepot_http_timeout,
             ),
             pave_event_space()(
-                per_chat_id(), create_open, deaf_detector.DeafDetector, timeout=telepot_http_timeout
+                per_chat_id(), create_open, deaf_detector.DeafDetectorHandler, timeout=telepot_http_timeout
             ),
             pave_event_space()(
                 per_chat_id(),
                 create_open,
-                learning_engine.LearningEngine,
+                learning_engine.LearningEngineHandler,
                 knowledge_base=knowledge_base,
                 self_reference_detector=query_detector.self_reference_detector(bot_name),
                 bot_name=bot_name,
@@ -75,7 +75,7 @@ def main():
             pave_event_space()(
                 per_chat_id(),
                 create_open,
-                answer_engine.AnswerEngine,
+                answer_engine.AnswerEngineHandler,
                 intelligence_core=intelligence_core,
                 self_reference_detector=query_detector.self_reference_detector(bot_name),
                 timeout=telepot_http_timeout,

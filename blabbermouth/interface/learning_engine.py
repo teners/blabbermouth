@@ -3,12 +3,12 @@ import telepot
 from blabbermouth.intellegence.knowledge_base import KnowledgeBase
 
 
-class LearningEngine(telepot.aio.helper.ChatHandler):
+class LearningEngineHandler(telepot.aio.helper.ChatHandler):
     def __init__(self, *args, knowledge_base, self_reference_detector, bot_name, **kwargs):
         if not isinstance(knowledge_base, KnowledgeBase):
             raise TypeError("knowledge_base must be KnowledgeBase")
 
-        super(LearningEngine, self).__init__(*args, **kwargs)
+        super(LearningEngineHandler, self).__init__(*args, **kwargs)
 
         self._knowledge_base = knowledge_base
         self._self_reference_detector = self_reference_detector

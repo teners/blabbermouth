@@ -15,7 +15,7 @@ class SortType(enum.Enum):
     TOP = "top"
 
 
-class TopRedditPost(telepot.aio.helper.ChatHandler):
+class TopRedditPostHandler(telepot.aio.helper.ChatHandler):
     TOP_POST_QUERY = "top_reddit_post_toggle"
 
     REDDIT_URL = "https://reddit.com"
@@ -64,7 +64,7 @@ class TopRedditPost(telepot.aio.helper.ChatHandler):
     ]
 
     def __init__(self, *args, sort_type, period, user_agent, personal_query_detector, **kwargs):
-        super(TopRedditPost, self).__init__(*args, **kwargs)
+        super(TopRedditPostHandler, self).__init__(*args, **kwargs)
 
         self._sort_type = sort_type
         self._period = period
@@ -119,7 +119,7 @@ class TopRedditPost(telepot.aio.helper.ChatHandler):
             async with session.get(url) as response:
                 response_text = await response.text()
                 if response.status != 200:
-                    raise Exception("Got unwanted response {}: {}", response.status, response_text)
+                    raise Exception("Got unwanted response {}: {}".format(response.status, response_text))
 
         response = json.loads(response_text)
         top_post = response["data"]["children"][-1]["data"]["permalink"]
