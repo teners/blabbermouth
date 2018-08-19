@@ -2,10 +2,10 @@ import re
 
 
 def personal_query_detector(identity):
-    identity_regex = re.compile('^/(.*)@{}$'.format(identity))
+    identity_regex = re.compile("^/(.*)@{}$".format(identity))
 
     def detector(message):
-        text = message.get('text')
+        text = message.get("text")
         if text is None:
             return None
 
@@ -19,14 +19,14 @@ def personal_query_detector(identity):
 
 
 def self_reference_detector(identity):
-    self_reference = '@{}'.format(identity)
+    self_reference = "@{}".format(identity)
 
     def detector(message):
-        reply = message.get('reply_to_message')
+        reply = message.get("reply_to_message")
         if reply is not None:
-            return reply['from']['username'] == identity
+            return reply["from"]["username"] == identity
 
-        text = message.get('text')
+        text = message.get("text")
         if text is None:
             return None
 

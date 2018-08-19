@@ -4,9 +4,9 @@ import random
 import attr
 import markovify
 
-from intellegence.intellegence_core import IntellegenceCore
-from intellegence.knowledge_base import KnowledgeBase
-from util.lifespan import Lifespan
+from blabbermouth.intellegence.intellegence_core import IntellegenceCore
+from blabbermouth.intellegence.knowledge_base import KnowledgeBase
+from blabbermouth.util.lifespan import Lifespan
 
 
 @attr.s(slots=True)
@@ -18,14 +18,14 @@ class CachedMarkovText:
 
     def make_sentence(self, **source_args):
         if self.text is None or not self.knowledge_lifespan:
-            knowledge = '. '.join([sentence for sentence in self.knowledge_source(**source_args)])
+            knowledge = ". ".join([sentence for sentence in self.knowledge_source(**source_args)])
             self.text = markovify.Text(knowledge)
             self.knowledge_lifespan.reset()
 
         sentence = self.text.make_sentence(tries=self.make_sentence_attempts)
 
         if sentence is None:
-            print('[CachedMarkovText]: Failed to build markov text')
+            print("[CachedMarkovText]: Failed to build markov text")
 
         return sentence
 
@@ -51,12 +51,18 @@ class MarkovChainIntellegenceCore(IntellegenceCore):
                 make_sentence_attempts=self.make_sentence_attempts,
             )
             for p in [
-                (self.Strategy.BY_CURRENT_CHAT,
-                 lambda **kwargs: self.knowledge_base.select_by_chat(kwargs['chat_id'])),
-                (self.Strategy.BY_CURRENT_USER,
-                 lambda **kwargs: self.knowledge_base.select_by_user(kwargs['user'])),
-                (self.Strategy.BY_FULL_KNOWLEDGE,
-                 lambda **kwargs: self.knowledge_base.select_by_full_knowledge()),
+                (
+                    self.Strategy.BY_CURRENT_CHAT,
+                    lambda **kwargs: self.knowledge_base.select_by_chat(kwargs["chat_id"]),
+                ),
+                (
+                    self.Strategy.BY_CURRENT_USER,
+                    lambda **kwargs: self.knowledge_base.select_by_user(kwargs["user"]),
+                ),
+                (
+                    self.Strategy.BY_FULL_KNOWLEDGE,
+                    lambda **kwargs: self.knowledge_base.select_by_full_knowledge(),
+                ),
             ]
         }
 
@@ -66,7 +72,9 @@ class MarkovChainIntellegenceCore(IntellegenceCore):
     def respond(self, chat_id, user, message):
         return self._form_message(
             strategies=[
-                self.Strategy.BY_CURRENT_CHAT, self.Strategy.BY_CURRENT_USER, self.Strategy.BY_FULL_KNOWLEDGE
+                self.Strategy.BY_CURRENT_CHAT,
+                self.Strategy.BY_CURRENT_USER,
+                self.Strategy.BY_FULL_KNOWLEDGE,
             ],
             chat_id=chat_id,
             user=user,
@@ -75,7 +83,7 @@ class MarkovChainIntellegenceCore(IntellegenceCore):
     def _form_message(self, strategies, **kwargs):
         strategy = random.choice(strategies)
 
-        print('[MarkovChainIntellegenceCore] Using {} strategy'.format(strategy))
+        print("[MarkovChainIntellegenceCore] Using {} strategy".format(strategy))
 
         sentence = self.markov_texts_by_strategy[strategy].make_sentence(**kwargs)
         return sentence if sentence is not None else self.answer_placeholder
