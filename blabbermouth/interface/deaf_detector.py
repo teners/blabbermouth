@@ -4,7 +4,7 @@ import telepot
 
 
 class DeafDetector(telepot.aio.helper.ChatHandler):
-    WHAT_REGEX = re.compile(r"^[ч|ш]т?[о|а|ё](\s(блять|бля|нахуй))?\.?$", re.IGNORECASE)
+    WHAT_REGEX = re.compile(r"^[ч|ш]т?[о|а|ё|е](\s(блять|бля|нахуй))?\.?$", re.IGNORECASE)
 
     TO_THIRD_CONVERSION_MAP = {"я": "Он", "меня": "Его", "мне": "Ему", "мной": "Им"}
 
