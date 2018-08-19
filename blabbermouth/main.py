@@ -7,10 +7,10 @@ import telepot
 from telepot.aio.loop import MessageLoop
 from telepot.aio.delegate import per_chat_id, create_open, pave_event_space
 
-from interface import answer_engine, deaf_detector, learning_engine, top_reddit_post
-from intellegence.markov_chain_intellegence_core import MarkovChainIntellegenceCore
-from intellegence.mongo_knowledge_base import MongoKnowledgeBase
-from util import config, query_detector
+from blabbermouth import answer_engine, deaf_detector, learning_engine, top_reddit_post
+from blabbermouth.markov_chain_intellegence_core import MarkovChainIntellegenceCore
+from blabbermouth.mongo_knowledge_base import MongoKnowledgeBase
+from blabbermouth.util import config, query_detector
 
 
 def parse_args():

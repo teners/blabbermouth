@@ -4,8 +4,8 @@ import random
 import attr
 import markovify
 
-from blabbermouth.intellegence.intellegence_core import IntellegenceCore
-from blabbermouth.intellegence.knowledge_base import KnowledgeBase
+from blabbermouth.intellegence_core import IntellegenceCore
+from blabbermouth.knowledge_base import KnowledgeBase
 from blabbermouth.util.lifespan import Lifespan
 
 

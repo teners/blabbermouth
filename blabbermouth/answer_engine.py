@@ -1,6 +1,6 @@
 import telepot
 
-from blabbermouth.intellegence.intellegence_core import IntellegenceCore
+from blabbermouth.intellegence_core import IntellegenceCore
 
 
 class AnswerEngineHandler(telepot.aio.helper.ChatHandler):
@@ -8,7 +8,7 @@ class AnswerEngineHandler(telepot.aio.helper.ChatHandler):
         if not isinstance(intelligence_core, IntellegenceCore):
             raise TypeError("intelligence_core must be IntellegenceCore")
 
-        super(AnswerEngine, self).__init__(*args, **kwargs)
+        super(AnswerEngineHandler, self).__init__(*args, **kwargs)
 
         self._intelligence_core = intelligence_core
         self._self_reference_detector = self_reference_detector

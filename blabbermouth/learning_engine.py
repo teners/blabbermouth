@@ -1,6 +1,6 @@
 import telepot
 
-from blabbermouth.intellegence.knowledge_base import KnowledgeBase
+from blabbermouth.knowledge_base import KnowledgeBase
 
 
 class LearningEngineHandler(telepot.aio.helper.ChatHandler):
