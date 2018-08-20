@@ -1,7 +1,7 @@
 import abc
 
 
-class IntellegenceCore(abc.ABC):
+class IntelligenceCore(abc.ABC):
     @abc.abstractmethod
     def conceive(self):
         pass

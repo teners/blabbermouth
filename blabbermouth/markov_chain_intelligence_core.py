@@ -4,7 +4,7 @@ import random
 import attr
 import markovify
 
-from blabbermouth.intellegence_core import IntellegenceCore
+from blabbermouth.intelligence_core import IntelligenceCore
 from blabbermouth.knowledge_base import KnowledgeBase
 from blabbermouth.util.lifespan import Lifespan
 
@@ -31,7 +31,7 @@ class CachedMarkovText:
 
 
 @attr.s(slots=True)
-class MarkovChainIntellegenceCore(IntellegenceCore):
+class MarkovChainIntelligenceCore(IntelligenceCore):
     class Strategy(enum.Enum):
         BY_CURRENT_CHAT = enum.auto()
         BY_CURRENT_USER = enum.auto()
@@ -83,7 +83,7 @@ class MarkovChainIntellegenceCore(IntellegenceCore):
     def _form_message(self, strategies, **kwargs):
         strategy = random.choice(strategies)
 
-        print("[MarkovChainIntellegenceCore] Using {} strategy".format(strategy))
+        print("[MarkovChainIntelligenceCore] Using {} strategy".format(strategy))
 
         sentence = self.markov_texts_by_strategy[strategy].make_sentence(chat_id=self.chat_id, **kwargs)
         return sentence if sentence is not None else self.answer_placeholder

@@ -22,7 +22,7 @@ class AnswerEngineHandler(telepot.aio.helper.ChatHandler):
         intelligence_core = self._intelligence_registry.get_core(chat_id)
         answer = intelligence_core.respond(user=user, message=message.get("text", ""))
         if answer is None:
-            print('[AnswerEngine] Got "None" answer from intellegence core')
+            print('[AnswerEngine] Got "None" answer from intelligence core')
             return
 
         await self.sender.sendMessage(answer)

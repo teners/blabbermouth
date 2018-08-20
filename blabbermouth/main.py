@@ -9,7 +9,7 @@ from telepot.aio.delegate import per_chat_id, create_open, pave_event_space
 
 from blabbermouth import answer_engine, chat_intelligence, deaf_detector, learning_engine, top_reddit_post
 from blabbermouth.aggregating_intelligence_core import AggregatingIntelligenceCore
-from blabbermouth.markov_chain_intellegence_core import MarkovChainIntellegenceCore
+from blabbermouth.markov_chain_intelligence_core import MarkovChainIntelligenceCore
 from blabbermouth.mongo_knowledge_base import MongoKnowledgeBase
 from blabbermouth.util import config, query_detector
 
@@ -38,14 +38,14 @@ def main():
     def main_intelligence_core_constructor(chat_id):
         return AggregatingIntelligenceCore(
             cores=[
-                MarkovChainIntellegenceCore(
+                MarkovChainIntelligenceCore(
                     chat_id=chat_id,
                     knowledge_base=knowledge_base,
                     knowledge_lifespan=datetime.timedelta(
-                        minutes=conf["markov_chain_intellegence_core"]["knowledge_lifespan_minutes"]
+                        minutes=conf["markov_chain_intelligence_core"]["knowledge_lifespan_minutes"]
                     ),
-                    answer_placeholder=conf["markov_chain_intellegence_core"]["answer_placeholder"],
-                    make_sentence_attempts=conf["markov_chain_intellegence_core"]["make_sentence_attempts"],
+                    answer_placeholder=conf["markov_chain_intelligence_core"]["answer_placeholder"],
+                    make_sentence_attempts=conf["markov_chain_intelligence_core"]["make_sentence_attempts"],
                 )
             ]
         )

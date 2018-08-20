@@ -2,11 +2,11 @@ import random
 
 import attr
 
-from blabbermouth.intellegence_core import IntellegenceCore
+from blabbermouth.intelligence_core import IntelligenceCore
 
 
 @attr.s
-class AggregatingIntelligenceCore(IntellegenceCore):
+class AggregatingIntelligenceCore(IntelligenceCore):
     cores = attr.ib()
 
     def conceive(self):
