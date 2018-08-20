@@ -1,18 +1,9 @@
-import enum
-import json
 import random
 
-import aiohttp
 import telepot
 
+from blabbermouth.reddit_browser import FeedSortType, RedditBrowser
 from blabbermouth.util.timer import Timer
-
-
-class SortType(enum.Enum):
-    HOT = "hot"
-    NEW = "new"
-    BEST = "best"
-    TOP = "top"
 
 
 class TopRedditPostHandler(telepot.aio.helper.ChatHandler):
@@ -63,10 +54,11 @@ class TopRedditPostHandler(telepot.aio.helper.ChatHandler):
         "cooking",
     ]
 
-    def __init__(self, *args, sort_type, period, user_agent, personal_query_detector, **kwargs):
+    def __init__(self, *args, period, user_agent, personal_query_detector, **kwargs):
         super(TopRedditPostHandler, self).__init__(*args, **kwargs)
 
-        self._sort_type = sort_type
+        self._reddit_browser = RedditBrowser()
+        self._sort_types = list(FeedSortType)
         self._period = period
         self._personal_query_detector = personal_query_detector
         self._enabled = False
@@ -113,16 +105,15 @@ class TopRedditPostHandler(telepot.aio.helper.ChatHandler):
         print("[TopRedditPost] Looking up top post")
 
         subreddit = random.choice(self.SUBREDDITS_OF_INTEREST)
-        url = "{}/r/{}/{}.json?limit=1".format(self.REDDIT_URL, subreddit, self._sort_type.value)
+        sort_type = random.choice(self._sort_types)
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                response_text = await response.text()
-                if response.status != 200:
-                    raise Exception("Got unwanted response {}: {}".format(response.status, response_text))
-
-        response = json.loads(response_text)
-        top_post = response["data"]["children"][-1]["data"]["permalink"]
+        top_post = None
+        async for post in self._reddit_browser.lookup_top_posts(subreddit, sort_type, limit=1):
+            top_post = post
+            break
+        else:
+            print("[TopRedditPost] Top post was not found")
+            return
 
         print("[TopRedditPost] Top post of choice is {}".format(top_post))
 
