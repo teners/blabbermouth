@@ -18,7 +18,7 @@ class CachedMarkovText:
 
     def make_sentence(self, **source_args):
         if self.text is None or not self.knowledge_lifespan:
-            knowledge = ". ".join([sentence for sentence in self.knowledge_source(**source_args)])
+            knowledge = ". ".join(sentence for sentence in self.knowledge_source(**source_args))
             self.text = markovify.Text(knowledge)
             self.knowledge_lifespan.reset()
 
