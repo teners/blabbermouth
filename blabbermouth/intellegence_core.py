@@ -7,5 +7,5 @@ class IntellegenceCore(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def respond(self, chat_id, user, message):
+    def respond(self, user, message):
         pass

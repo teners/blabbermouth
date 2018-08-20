@@ -1,16 +1,11 @@
 import telepot
 
-from blabbermouth.intellegence_core import IntellegenceCore
-
 
 class AnswerEngineHandler(telepot.aio.helper.ChatHandler):
-    def __init__(self, *args, intelligence_core, self_reference_detector, **kwargs):
-        if not isinstance(intelligence_core, IntellegenceCore):
-            raise TypeError("intelligence_core must be IntellegenceCore")
-
+    def __init__(self, *args, intelligence_registry, self_reference_detector, **kwargs):
         super(AnswerEngineHandler, self).__init__(*args, **kwargs)
 
-        self._intelligence_core = intelligence_core
+        self._intelligence_registry = intelligence_registry
         self._self_reference_detector = self_reference_detector
 
         print("[AnswerEngine] Created {}".format(id(self)))
@@ -24,7 +19,8 @@ class AnswerEngineHandler(telepot.aio.helper.ChatHandler):
 
         print("[AnswerEngine] User {} in chat {} is talking to me".format(user, chat_id))
 
-        answer = self._intelligence_core.respond(chat_id=chat_id, user=user, message=message.get("text", ""))
+        intelligence_core = self._intelligence_registry.get_core(chat_id)
+        answer = intelligence_core.respond(user=user, message=message.get("text", ""))
         if answer is None:
             print('[AnswerEngine] Got "None" answer from intellegence core')
             return

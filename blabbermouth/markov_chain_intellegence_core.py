@@ -37,6 +37,7 @@ class MarkovChainIntellegenceCore(IntellegenceCore):
         BY_CURRENT_USER = enum.auto()
         BY_FULL_KNOWLEDGE = enum.auto()
 
+    chat_id = attr.ib()
     knowledge_base = attr.ib(validator=attr.validators.instance_of(KnowledgeBase))
     knowledge_lifespan = attr.ib()
     make_sentence_attempts = attr.ib()
@@ -69,14 +70,13 @@ class MarkovChainIntellegenceCore(IntellegenceCore):
     def conceive(self):
         return self._form_message(strategies=[self.Strategy.BY_CURRENT_CHAT, self.Strategy.BY_FULL_KNOWLEDGE])
 
-    def respond(self, chat_id, user, message):
+    def respond(self, user, message):
         return self._form_message(
             strategies=[
                 self.Strategy.BY_CURRENT_CHAT,
                 self.Strategy.BY_CURRENT_USER,
                 self.Strategy.BY_FULL_KNOWLEDGE,
             ],
-            chat_id=chat_id,
             user=user,
         )
 
@@ -85,5 +85,5 @@ class MarkovChainIntellegenceCore(IntellegenceCore):
 
         print("[MarkovChainIntellegenceCore] Using {} strategy".format(strategy))
 
-        sentence = self.markov_texts_by_strategy[strategy].make_sentence(**kwargs)
+        sentence = self.markov_texts_by_strategy[strategy].make_sentence(chat_id=self.chat_id, **kwargs)
         return sentence if sentence is not None else self.answer_placeholder

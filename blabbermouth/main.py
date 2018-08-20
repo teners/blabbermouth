@@ -7,7 +7,8 @@ import telepot
 from telepot.aio.loop import MessageLoop
 from telepot.aio.delegate import per_chat_id, create_open, pave_event_space
 
-from blabbermouth import answer_engine, deaf_detector, learning_engine, top_reddit_post
+from blabbermouth import answer_engine, chat_intelligence, deaf_detector, learning_engine, top_reddit_post
+from blabbermouth.aggregating_intelligence_core import AggregatingIntelligenceCore
 from blabbermouth.markov_chain_intellegence_core import MarkovChainIntellegenceCore
 from blabbermouth.mongo_knowledge_base import MongoKnowledgeBase
 from blabbermouth.util import config, query_detector
@@ -33,13 +34,24 @@ def main():
         db_name=conf["mongo_knowledge_base"]["db_name"],
         db_collection=conf["mongo_knowledge_base"]["db_collection"],
     )
-    intelligence_core = MarkovChainIntellegenceCore(
-        knowledge_base=knowledge_base,
-        knowledge_lifespan=datetime.timedelta(
-            minutes=conf["markov_chain_intellegence_core"]["knowledge_lifespan_minutes"]
-        ),
-        answer_placeholder=conf["markov_chain_intellegence_core"]["answer_placeholder"],
-        make_sentence_attempts=conf["markov_chain_intellegence_core"]["make_sentence_attempts"],
+
+    def main_intelligence_core_constructor(chat_id):
+        return AggregatingIntelligenceCore(
+            cores=[
+                MarkovChainIntellegenceCore(
+                    chat_id=chat_id,
+                    knowledge_base=knowledge_base,
+                    knowledge_lifespan=datetime.timedelta(
+                        minutes=conf["markov_chain_intellegence_core"]["knowledge_lifespan_minutes"]
+                    ),
+                    answer_placeholder=conf["markov_chain_intellegence_core"]["answer_placeholder"],
+                    make_sentence_attempts=conf["markov_chain_intellegence_core"]["make_sentence_attempts"],
+                )
+            ]
+        )
+
+    intelligence_registry = chat_intelligence.IntelligenceRegistry(
+        core_constructor=main_intelligence_core_constructor
     )
 
     bot_name = conf["bot_name"]
@@ -51,6 +63,16 @@ def main():
         bot_token,
         [
             pave_event_space()(
+                per_chat_id(), create_open, deaf_detector.DeafDetectorHandler, timeout=telepot_http_timeout
+            ),
+            pave_event_space()(
+                per_chat_id(),
+                create_open,
+                chat_intelligence.ChatIntelligence,
+                intellegince_registry=intelligence_registry,
+                timeout=telepot_http_timeout,
+            ),
+            pave_event_space()(
                 per_chat_id(),
                 create_open,
                 top_reddit_post.TopRedditPostHandler,
@@ -58,9 +80,6 @@ def main():
                 user_agent=user_agent,
                 personal_query_detector=query_detector.personal_query_detector(bot_name),
                 timeout=telepot_http_timeout,
-            ),
-            pave_event_space()(
-                per_chat_id(), create_open, deaf_detector.DeafDetectorHandler, timeout=telepot_http_timeout
             ),
             pave_event_space()(
                 per_chat_id(),
@@ -75,7 +94,7 @@ def main():
                 per_chat_id(),
                 create_open,
                 answer_engine.AnswerEngineHandler,
-                intelligence_core=intelligence_core,
+                intelligence_registry=intelligence_registry,
                 self_reference_detector=query_detector.self_reference_detector(bot_name),
                 timeout=telepot_http_timeout,
             ),
