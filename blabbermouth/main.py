@@ -54,7 +54,6 @@ def main():
                 per_chat_id(),
                 create_open,
                 top_reddit_post.TopRedditPostHandler,
-                sort_type=top_reddit_post.SortType.HOT,
                 period=datetime.timedelta(hours=conf["reddit_browser"]["query_period_hours"]),
                 user_agent=user_agent,
                 personal_query_detector=query_detector.personal_query_detector(bot_name),
