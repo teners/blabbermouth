@@ -7,7 +7,7 @@ import telepot
 from telepot.aio.loop import MessageLoop
 from telepot.aio.delegate import per_chat_id, create_open, pave_event_space
 
-from blabbermouth import answer_engine, chat_intelligence, deaf_detector, learning_engine, top_reddit_post
+from blabbermouth import chatter_handler, chat_intelligence, deaf_detector, learning_handler, top_reddit_post
 from blabbermouth.aggregating_intelligence_core import AggregatingIntelligenceCore
 from blabbermouth.markov_chain_intelligence_core import MarkovChainIntelligenceCore
 from blabbermouth.mongo_knowledge_base import MongoKnowledgeBase
@@ -84,7 +84,7 @@ def main():
             pave_event_space()(
                 per_chat_id(),
                 create_open,
-                learning_engine.LearningEngineHandler,
+                learning_handler.LearningHandler,
                 knowledge_base=knowledge_base,
                 self_reference_detector=query_detector.self_reference_detector(bot_name),
                 bot_name=bot_name,
