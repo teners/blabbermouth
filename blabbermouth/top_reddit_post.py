@@ -57,13 +57,12 @@ class TopRedditPostHandler(telepot.aio.helper.ChatHandler):
     def __init__(self, *args, period, user_agent, personal_query_detector, **kwargs):
         super(TopRedditPostHandler, self).__init__(*args, **kwargs)
 
-        self._reddit_browser = RedditBrowser()
+        self._reddit_browser = RedditBrowser(user_agent)
         self._sort_types = list(FeedSortType)
         self._period = period
         self._personal_query_detector = personal_query_detector
         self._enabled = False
         self._timer = None
-        self._user_agent = user_agent
 
         print("[TopRedditPost] Created {}".format(id(self)))
 
