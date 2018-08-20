@@ -10,10 +10,14 @@ class AggregatingIntelligenceCore(IntelligenceCore):
     cores = attr.ib()
 
     def conceive(self):
-        return self._choose_core().conceive()
+        return self._try_cores(lambda core: core.conceive)
 
     def respond(self, user, message):
-        return self._choose_core().respond(user, message)
+        return self._try_cores(lambda core: core.respond(user, message))
 
-    def _choose_core(self):
-        return random.choice(self.cores)
+    def _try_cores(self, action):
+        for core in random.shuffle(self.cores):
+            result = action(core)
+            if result is not None:
+                return result
+        return None
