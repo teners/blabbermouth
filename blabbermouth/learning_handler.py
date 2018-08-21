@@ -29,7 +29,7 @@ class LearningHandler(telepot.aio.helper.ChatHandler):
 
         chat_id = message["chat"]["id"]
 
-        self._knowledge_base.record(chat_id=chat_id, user=user, text=text)
+        await self._knowledge_base.record(chat_id=chat_id, user=user, text=text)
 
     def on__idle(self, _):
         print("[LearningHandler] Ignoring on__idle")
