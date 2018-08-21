@@ -11,7 +11,7 @@ class IntelligenceRegistry:
         self.cores[chat_id] = self.core_constructor(chat_id)
 
     def get_core(self, chat_id):
-        return self.cores.get(chat_id)
+        return self.cores[chat_id]
 
 
 class ChatIntelligence(telepot.aio.helper.ChatHandler):

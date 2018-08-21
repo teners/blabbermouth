@@ -1,18 +1,30 @@
 import asyncio
+import datetime
+
+import attr
 
 
+@attr.s
 class Timer:
-    def __init__(self, interval, callback):
-        self._enabled = True
-        self._interval = interval
-        self._callback = callback
-        self._task = asyncio.ensure_future(self._job())
+    callback = attr.ib()
+    interval = attr.ib(attr.validators.instance_of(datetime.timedelta))
+    task = attr.ib(default=None)
+    enabled = attr.ib(default=True)
 
-    async def _job(self):
-        while self._enabled:
-            await self._callback()
-            await asyncio.sleep(self._interval.seconds)
+    def __attrs_post_init__(self):
+        self.enable()
 
-    def cancel(self):
-        self._enabled = False
-        self._task.cancel()
+    def enable(self):
+        self.disable()
+
+        self.task = asyncio.ensure_future(self._work())
+        self.enabled = True
+
+    def disable(self):
+        self.task.cancel()
+        self.enabled = False
+
+    async def _work(self):
+        while self.enabled:
+            await asyncio.sleep(self.interval.seconds)
+            await self.callback()

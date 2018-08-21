@@ -67,10 +67,10 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
             ]
         }
 
-    def conceive(self):
+    async def conceive(self):
         return self._form_message(strategies=[self.Strategy.BY_CURRENT_CHAT, self.Strategy.BY_FULL_KNOWLEDGE])
 
-    def respond(self, user, message):
+    async def respond(self, user, message):
         return self._form_message(
             strategies=[
                 self.Strategy.BY_CURRENT_CHAT,

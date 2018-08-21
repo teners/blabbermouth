@@ -12,15 +12,14 @@ class FeedSortType(enum.Enum):
 
 
 class RedditBrowser:
-    REDDIT_URL = "https://reddit.com"
-
-    def __init__(self, user_agent):
+    def __init__(self, reddit_url, user_agent):
+        self._reddit_url = reddit_url
         self._client_headers = {"User-Agent": user_agent}
 
     async def lookup_top_posts(self, subreddit, sort_type, limit):
         print("[RedditBrowser] Looking up top posts")
 
-        url = "{}/r/{}/{}.json?limit={}".format(self.REDDIT_URL, subreddit, sort_type.value, limit)
+        url = "{}/r/{}/{}.json?limit={}".format(self._reddit_url, subreddit, sort_type.value, limit)
 
         async with aiohttp.ClientSession(headers=self._client_headers) as session:
             async with session.get(url) as response:

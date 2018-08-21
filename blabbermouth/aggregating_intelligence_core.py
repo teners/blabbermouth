@@ -9,15 +9,15 @@ from blabbermouth.intelligence_core import IntelligenceCore
 class AggregatingIntelligenceCore(IntelligenceCore):
     cores = attr.ib()
 
-    def conceive(self):
-        return self._try_cores(lambda core: core.conceive)
+    async def conceive(self):
+        return await self._try_cores(lambda core: core.conceive())
 
-    def respond(self, user, message):
-        return self._try_cores(lambda core: core.respond(user, message))
+    async def respond(self, user, message):
+        return await self._try_cores(lambda core: core.respond(user, message))
 
-    def _try_cores(self, action):
+    async def _try_cores(self, coro):
         for core in random.shuffle(self.cores):
-            result = action(core)
+            result = await coro(core)
             if result is not None:
                 return result
         return None

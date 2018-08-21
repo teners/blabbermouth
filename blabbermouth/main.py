@@ -7,10 +7,12 @@ import telepot
 from telepot.aio.loop import MessageLoop
 from telepot.aio.delegate import per_chat_id, create_open, pave_event_space
 
-from blabbermouth import chatter_handler, chat_intelligence, deaf_detector, learning_handler, top_reddit_post
+from blabbermouth import chatter_handler, chat_intelligence, deaf_detector, learning_handler
 from blabbermouth.aggregating_intelligence_core import AggregatingIntelligenceCore
 from blabbermouth.markov_chain_intelligence_core import MarkovChainIntelligenceCore
 from blabbermouth.mongo_knowledge_base import MongoKnowledgeBase
+from blabbermouth.reddit_browser import RedditBrowser
+from blabbermouth.reddit_chatter import RedditChatter
 from blabbermouth.util import config, query_detector
 
 
@@ -25,6 +27,11 @@ def main():
     args = parse_args()
     config_env_overrides = {"is_prod": not args.dev, "token": args.token}
     conf = config.load_config("config", "env.yaml", config_env_overrides)
+
+    bot_name = conf["bot_name"]
+    bot_token = conf["token"]
+    user_agent = conf["core"]["user_agent"]
+    telepot_http_timeout = conf["telepot"]["http_timeout"]
 
     telepot.aio.api.set_proxy(conf["core"]["proxy"])
 
@@ -46,18 +53,20 @@ def main():
                     ),
                     answer_placeholder=conf["markov_chain_intelligence_core"]["answer_placeholder"],
                     make_sentence_attempts=conf["markov_chain_intelligence_core"]["make_sentence_attempts"],
-                )
+                ),
+                RedditChatter(
+                    top_post_comments=conf["reddit_chatter"]["top_post_comments"],
+                    subreddits_of_interest=conf["reddit_chatter"]["subreddits_of_interest"],
+                    reddit_browser=RedditBrowser(
+                        reddit_url=conf["reddit_browser"]["reddit_url"], user_agent=user_agent
+                    ),
+                ),
             ]
         )
 
     intelligence_registry = chat_intelligence.IntelligenceRegistry(
         core_constructor=main_intelligence_core_constructor
     )
-
-    bot_name = conf["bot_name"]
-    bot_token = conf["token"]
-    user_agent = conf["core"]["user_agent"]
-    telepot_http_timeout = conf["telepot"]["http_timeout"]
 
     bot = telepot.aio.DelegatorBot(
         bot_token,
@@ -75,15 +84,6 @@ def main():
             pave_event_space()(
                 per_chat_id(),
                 create_open,
-                top_reddit_post.TopRedditPostHandler,
-                period=datetime.timedelta(hours=conf["reddit_browser"]["query_period_hours"]),
-                user_agent=user_agent,
-                personal_query_detector=query_detector.personal_query_detector(bot_name),
-                timeout=telepot_http_timeout,
-            ),
-            pave_event_space()(
-                per_chat_id(),
-                create_open,
                 learning_handler.LearningHandler,
                 knowledge_base=knowledge_base,
                 self_reference_detector=query_detector.self_reference_detector(bot_name),
@@ -93,9 +93,11 @@ def main():
             pave_event_space()(
                 per_chat_id(),
                 create_open,
-                answer_engine.AnswerEngineHandler,
+                chatter_handler.ChatterHandler,
                 intelligence_registry=intelligence_registry,
                 self_reference_detector=query_detector.self_reference_detector(bot_name),
+                personal_query_detector=query_detector.personal_query_detector(bot_name),
+                conceive_interval=conf["chatter_handler"]["conceive_interval"],
                 timeout=telepot_http_timeout,
             ),
         ],
