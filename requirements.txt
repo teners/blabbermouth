@@ -4,6 +4,6 @@ pylint
 
 jinja2
 markovify
-pymongo
+motor
 pyyaml
 telepot
