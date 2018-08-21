@@ -6,7 +6,7 @@ import telepot
 from blabbermouth.util.chain import BrokenChain, check, not_none
 
 
-class PreviousMessageRetreiver:
+class PreviousMessageRetriever:
     @attr.s(slots=True, frozen=True)
     class Info:
         text = attr.ib()
@@ -14,11 +14,11 @@ class PreviousMessageRetreiver:
 
     def __init__(self):
         self._previous_info = None
-        self._retreivers = [self._try_retreive_from_reply, self._try_infer_from_previous_message]
+        self._retrievers = [self._try_retrieve_from_reply, self._try_infer_from_previous_message]
 
-    def retreive(self, message, text, user):
-        for retreiver in self._retreivers:
-            previous_message = retreiver(message=message, text=text, user=user)
+    def retrieve(self, message, text, user):
+        for retriever in self._retrievers:
+            previous_message = retriever(message=message, text=text, user=user)
             if previous_message is not None:
                 return previous_message
         return None
@@ -26,7 +26,7 @@ class PreviousMessageRetreiver:
     def record(self, text, user):
         self._previous_info = self.Info(text=text, user=user)
 
-    def _try_retreive_from_reply(self, message, **_):
+    def _try_retrieve_from_reply(self, message, **_):
         try:
             reply = not_none(message.get("reply_to_message"))
             previous_text = not_none(reply.get("text"))
@@ -51,7 +51,7 @@ class DeafDetector:
     TO_THIRD_CONVERSION_MAP = {"я": "Он", "меня": "Его", "мне": "Ему", "мной": "Им"}
 
     def __init__(self):
-        self._previous_message_retreiver = PreviousMessageRetreiver()
+        self._previous_message_retriever = PreviousMessageRetriever()
 
     def try_reply(self, message):
         try:
@@ -60,11 +60,11 @@ class DeafDetector:
             source = not_none(message.get("from"))
             user = not_none(source.get("username"))
 
-            self._previous_message_retreiver.record(user, text)
+            self._previous_message_retriever.record(user, text)
             not_none(re.match(self.WHAT_REGEX, text))
-            self._previous_message_retreiver.record(user=None, text=None)
+            self._previous_message_retriever.record(user=None, text=None)
 
-            previous_message = not_none(self._previous_message_retreiver.retreive(message, user, text))
+            previous_message = not_none(self._previous_message_retriever.retrieve(message, user, text))
             return self._reply_to_deaf(previous_message.text, previous_message.user)
         except BrokenChain:
             return None
