@@ -1,6 +1,6 @@
+black
 flake8
 pylint
-black
 
 jinja2
 markovify
