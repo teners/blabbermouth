@@ -12,8 +12,7 @@ from blabbermouth.util.lifespan import Lifespan
 
 @attr.s(slots=True)
 class CachedMarkovText:
-    event_loop = attr.ib()
-    worker = attr.ib()
+    make_async = attr.ib()
     knowledge_source = attr.ib()
     make_sentence_attempts = attr.ib(default=10)
     text_lifespan = attr.ib(converter=Lifespan)
@@ -25,7 +24,7 @@ class CachedMarkovText:
             print("[CachedMarkovText] First text is currently building")
             return None
 
-        if self.text is None or not self.text_lifespan:
+        if (self.text is None or not self.text_lifespan) and not self.text_is_building:
             with self._text_building_session():
                 self.text = await self._build_text(knowledge_dependency)
                 self.text_lifespan.reset()
@@ -51,7 +50,7 @@ class CachedMarkovText:
 
     async def _build_text(self, knowledge_dependency):
         knowledge = ". ".join(sentence async for sentence in self.knowledge_source(knowledge_dependency))
-        future = await self.event_loop.run_in_executor(self.worker, lambda: markovify.Text(knowledge))
+        future = await self.make_async(lambda: markovify.Text(knowledge))
         return future.result()
 
 
@@ -62,8 +61,7 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
         BY_CURRENT_USER = enum.auto()
         BY_FULL_KNOWLEDGE = enum.auto()
 
-    event_loop = attr.ib()
-    worker = attr.ib()
+    make_async = attr.ib()
     chat_id = attr.ib()
     knowledge_base = attr.ib(validator=attr.validators.instance_of(KnowledgeBase))
     knowledge_lifespan = attr.ib()
@@ -76,8 +74,7 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
 
         self.markov_texts_by_strategy = {
             p[0]: CachedMarkovText(
-                event_loop=self.event_loop,
-                worker=self.worker,
+                make_async=self.make_async,
                 knowledge_source=p[1],
                 make_sentence_attempts=self.make_sentence_attempts,
                 text_lifespan=self.knowledge_lifespan,
