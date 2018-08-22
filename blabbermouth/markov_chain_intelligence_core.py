@@ -1,3 +1,4 @@
+import contextlib
 import enum
 import random
 
@@ -12,22 +13,41 @@ from blabbermouth.util.lifespan import Lifespan
 @attr.s(slots=True)
 class CachedMarkovText:
     knowledge_source = attr.ib()
-    knowledge_lifespan = attr.ib(converter=Lifespan)
     make_sentence_attempts = attr.ib(default=10)
+    text_lifespan = attr.ib(converter=Lifespan)
     text = attr.ib(default=None)
+    text_is_building = attr.ib(default=False)
 
-    async def make_sentence(self, dependency):
-        if self.text is None or not self.knowledge_lifespan:
-            knowledge = ". ".join(sentence async for sentence in self.knowledge_source(dependency))
-            self.text = markovify.Text(knowledge)
-            self.knowledge_lifespan.reset()
+    async def make_sentence(self, knowledge_dependency):
+        if self.text is None and self.text_is_building:
+            print("[CachedMarkovText] First text is currently building")
+            return None
+
+        if self.text is None or not self.text_lifespan:
+            with self._text_building_session():
+                self.text = await self._build_text(knowledge_dependency)
+                self.text_lifespan.reset()
 
         sentence = self.text.make_sentence(tries=self.make_sentence_attempts)
-
         if sentence is None:
-            print("[CachedMarkovText]: Failed to build markov text")
-
+            print("[CachedMarkovText]: Failed to make sentence")
         return sentence
+
+    @contextlib.contextmanager
+    def _text_building_session(self):
+        self.text_is_building = True
+        try:
+            yield
+        except Exception as ex:
+            print("[CachedMarkovText] Failed to build markov text: {}".format(ex))
+        finally:
+            self.text_is_building = False
+
+    async def _build_text(self, knowledge_dependency):
+        print("[CachedMarkovText] Building new text")
+
+        knowledge = ". ".join(sentence async for sentence in self.knowledge_source(knowledge_dependency))
+        return markovify.Text(knowledge)
 
 
 @attr.s(slots=True)
