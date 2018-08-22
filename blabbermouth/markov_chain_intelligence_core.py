@@ -18,6 +18,7 @@ class CachedMarkovText:
     text_lifespan = attr.ib(converter=Lifespan)
     text = attr.ib(default=None)
     text_is_building = attr.ib(default=False)
+    sentence_is_building = attr.ib(default=False)
 
     async def make_sentence(self, knowledge_dependency):
         if self.text is None and self.text_is_building:
@@ -29,9 +30,14 @@ class CachedMarkovText:
                 self.text = await self._build_text(knowledge_dependency)
                 self.text_lifespan.reset()
 
-        sentence = self.text.make_sentence(tries=self.make_sentence_attempts)
+        if self.sentence_is_building:
+            print("[CachedMarkovText] Sentence is building")
+            return None
+
+        with self._sentence_building_session():
+            sentence = await self._make_sentence()
         if sentence is None:
-            print("[CachedMarkovText]: Failed to make sentence")
+            print("[CachedMarkovText]: Failed to produce sentence")
         return sentence
 
     @contextlib.contextmanager
@@ -50,8 +56,22 @@ class CachedMarkovText:
 
     async def _build_text(self, knowledge_dependency):
         knowledge = ". ".join(sentence async for sentence in self.knowledge_source(knowledge_dependency))
-        future = await self.make_async(lambda: markovify.Text(knowledge))
-        return future.result()
+        return (await self.make_async(lambda: markovify.Text(knowledge))).result()
+
+    @contextlib.contextmanager
+    def _sentence_building_session(self):
+        self.sentence_is_building = True
+        try:
+            yield
+        except Exception as ex:
+            print("[CachedMarkovText] Failed to build sentence: {}".format(ex))
+        finally:
+            self.sentence_is_building = False
+
+    async def _make_sentence(self):
+        text = self.text
+        make_sentence_attempts = self.make_sentence_attempts
+        return (await self.make_async(lambda: text.make_sentence(tries=make_sentence_attempts))).result()
 
 
 @attr.s(slots=True)
