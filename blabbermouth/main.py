@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import datetime
+import concurrent.futures
 
 import telepot
 
@@ -42,10 +43,15 @@ def main():
         db_collection=conf["mongo_knowledge_base"]["db_collection"],
     )
 
+    event_loop = asyncio.get_event_loop()
+    markov_chain_worker = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+
     def main_intelligence_core_constructor(chat_id):
         return AggregatingIntelligenceCore(
             cores=[
                 MarkovChainIntelligenceCore(
+                    event_loop=event_loop,
+                    worker=markov_chain_worker,
                     chat_id=chat_id,
                     knowledge_base=knowledge_base,
                     knowledge_lifespan=datetime.timedelta(
@@ -103,10 +109,8 @@ def main():
         ],
     )
 
-    loop = asyncio.get_event_loop()
-    loop.create_task(MessageLoop(bot).run_forever())
-
-    loop.run_forever()
+    event_loop.create_task(MessageLoop(bot).run_forever())
+    event_loop.run_forever()
 
 
 if __name__ == "__main__":
