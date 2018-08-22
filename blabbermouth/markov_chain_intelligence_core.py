@@ -35,7 +35,7 @@ class CachedMarkovText:
             return None
 
         with self._sentence_building_session():
-            sentence = await self._make_sentence()
+            sentence = await self._build_sentence()
         if sentence is None:
             print("[CachedMarkovText]: Failed to produce sentence")
         return sentence
@@ -68,7 +68,7 @@ class CachedMarkovText:
         finally:
             self.sentence_is_building = False
 
-    async def _make_sentence(self):
+    async def _build_sentence(self):
         text = self.text
         make_sentence_attempts = self.make_sentence_attempts
         return (await self.make_async(lambda: text.make_sentence(tries=make_sentence_attempts))).result()
