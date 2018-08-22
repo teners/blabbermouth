@@ -16,9 +16,9 @@ class CachedMarkovText:
     make_sentence_attempts = attr.ib(default=10)
     text = attr.ib(default=None)
 
-    async def make_sentence(self, **source_args):
+    async def make_sentence(self, dependency):
         if self.text is None or not self.knowledge_lifespan:
-            knowledge = ". ".join(sentence async for sentence in self.knowledge_source(**source_args))
+            knowledge = ". ".join(sentence async for sentence in self.knowledge_source(dependency))
             self.text = markovify.Text(knowledge)
             self.knowledge_lifespan.reset()
 
@@ -45,6 +45,8 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
     markov_texts_by_strategy = attr.ib(dict)
 
     def __attrs_post_init__(self):
+        chat_id = self.chat_id
+
         self.markov_texts_by_strategy = {
             p[0]: CachedMarkovText(
                 knowledge_source=p[1],
@@ -52,24 +54,18 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
                 make_sentence_attempts=self.make_sentence_attempts,
             )
             for p in [
-                (
-                    self.Strategy.BY_CURRENT_CHAT,
-                    lambda **kwargs: self.knowledge_base.select_by_chat(kwargs["chat_id"]),
-                ),
+                (self.Strategy.BY_CURRENT_CHAT, lambda _: self.knowledge_base.select_by_chat(chat_id)),
                 (
                     self.Strategy.BY_CURRENT_USER,
-                    lambda **kwargs: self.knowledge_base.select_by_user(kwargs["user"]),
+                    lambda dependency: self.knowledge_base.select_by_user(dependency["user"]),
                 ),
-                (
-                    self.Strategy.BY_FULL_KNOWLEDGE,
-                    lambda **kwargs: self.knowledge_base.select_by_full_knowledge(),
-                ),
+                (self.Strategy.BY_FULL_KNOWLEDGE, lambda _: self.knowledge_base.select_by_full_knowledge()),
             ]
         }
 
     async def conceive(self):
         return await self._form_message(
-            strategies=[self.Strategy.BY_CURRENT_CHAT, self.Strategy.BY_FULL_KNOWLEDGE]
+            strategies=[self.Strategy.BY_CURRENT_CHAT, self.Strategy.BY_FULL_KNOWLEDGE], dependency={}
         )
 
     async def respond(self, user, message):
@@ -79,13 +75,13 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
                 self.Strategy.BY_CURRENT_USER,
                 self.Strategy.BY_FULL_KNOWLEDGE,
             ],
-            user=user,
+            dependency={"user": user},
         )
 
-    async def _form_message(self, strategies, **kwargs):
+    async def _form_message(self, strategies, dependency):
         strategy = random.choice(strategies)
 
         print("[MarkovChainIntelligenceCore] Using {} strategy".format(strategy))
 
-        sentence = await self.markov_texts_by_strategy[strategy].make_sentence(chat_id=self.chat_id, **kwargs)
+        sentence = await self.markov_texts_by_strategy[strategy].make_sentence(dependency)
         return sentence if sentence is not None else self.answer_placeholder
