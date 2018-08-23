@@ -1,11 +1,13 @@
 import re
 
 import attr
+import autologging
 import telepot
 
 from blabbermouth.util.chain import BrokenChain, check, not_none
 
 
+@autologging.logged
 class PreviousMessageRetriever:
     @attr.s(slots=True, frozen=True)
     class Info:
@@ -70,7 +72,7 @@ class DeafDetector:
             return None
 
     def _reply_to_deaf(self, previous_message, deaf_user):
-        print("[DeafDetector] Replying to {}".format(deaf_user))
+        self.__log.info("Replying to {}".format(deaf_user))
 
         return " ".join([self._convert_to_third(word) for word in previous_message.split(" ")])
 
@@ -84,7 +86,7 @@ class DeafDetectorHandler(telepot.aio.helper.ChatHandler):
 
         self._backend = DeafDetector()
 
-        print("[DeafDetectorHandler] Created {}".format(id(self)))
+        self.__log.info("Created {}".format(id(self)))
 
     async def on_chat_message(self, message):
         try:
@@ -94,4 +96,4 @@ class DeafDetectorHandler(telepot.aio.helper.ChatHandler):
             pass
 
     def on__idle(self, _):
-        print("[DeafDetectorHandler] Ignoring on__idle")
+        self.__log.debug("Ignoring on__idle")

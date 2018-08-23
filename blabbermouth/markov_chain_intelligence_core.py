@@ -3,6 +3,7 @@ import enum
 import random
 
 import attr
+import autologging
 import markovify
 
 from blabbermouth.intelligence_core import IntelligenceCore
@@ -10,6 +11,7 @@ from blabbermouth.knowledge_base import KnowledgeBase
 from blabbermouth.util.lifespan import Lifespan
 
 
+@autologging.logged
 @attr.s(slots=True)
 class CachedMarkovText:
     make_async = attr.ib()
@@ -22,7 +24,7 @@ class CachedMarkovText:
 
     async def make_sentence(self, knowledge_dependency):
         if self.text is None and self.text_is_building:
-            print("[CachedMarkovText] First text is currently building")
+            self.__log.info("First text is currently building")
             return None
 
         if (self.text is None or not self.text_lifespan) and not self.text_is_building:
@@ -31,26 +33,26 @@ class CachedMarkovText:
                 self.text_lifespan.reset()
 
         if self.sentence_is_building:
-            print("[CachedMarkovText] Sentence is building")
+            self.__log.info("Sentence is building")
             return None
 
         with self._sentence_building_session():
             sentence = await self._build_sentence()
         if sentence is None:
-            print("[CachedMarkovText]: Failed to produce sentence")
+            self.__log.info("Failed to produce sentence")
         return sentence
 
     @contextlib.contextmanager
     def _text_building_session(self):
-        print("[CachedMarkovText] Building new text")
+        self.__log.info("Building new text")
 
         self.text_is_building = True
         try:
             yield
         except Exception as ex:
-            print("[CachedMarkovText] Failed to build new text: {}".format(ex))
+            self.__log.error("Failed to build new text: {}".format(ex))
         else:
-            print("[CachedMarkovText] Successfully built new text")
+            self.__log.info("Successfully built new text")
         finally:
             self.text_is_building = False
 
@@ -64,7 +66,7 @@ class CachedMarkovText:
         try:
             yield
         except Exception as ex:
-            print("[CachedMarkovText] Failed to build sentence: {}".format(ex))
+            self.__log.error("[CachedMarkovText] Failed to build sentence: {}".format(ex))
         finally:
             self.sentence_is_building = False
 
@@ -74,6 +76,7 @@ class CachedMarkovText:
         return (await self.make_async(lambda: text.make_sentence(tries=make_sentence_attempts))).result()
 
 
+@autologging.logged
 @attr.s(slots=True)
 class MarkovChainIntelligenceCore(IntelligenceCore):
     class Strategy(enum.Enum):
@@ -127,7 +130,7 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
     async def _form_message(self, strategies, dependency):
         strategy = random.choice(strategies)
 
-        print("[MarkovChainIntelligenceCore] Using {} strategy".format(strategy))
+        self.__log.info("Using {} strategy".format(strategy))
 
         sentence = await self.markov_texts_by_strategy[strategy].make_sentence(dependency)
         return sentence if sentence is not None else self.answer_placeholder
