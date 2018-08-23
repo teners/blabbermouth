@@ -1,4 +1,5 @@
 import attr
+import autologging
 import telepot
 
 
@@ -14,16 +15,17 @@ class IntelligenceRegistry:
         return self.cores[chat_id]
 
 
+@autologging.logged
 class ChatIntelligence(telepot.aio.helper.ChatHandler):
     def __init__(self, *args, intelligence_registry, **kwargs):
         super(ChatIntelligence, self).__init__(*args, **kwargs)
 
         intelligence_registry.create_core(self.chat_id)
 
-        print("[ChatIntelligence] Created {}".format(id(self)))
+        self.__log.info("Created {}".format(id(self)))
 
     async def on_chat_message(self, message):
         pass
 
     def on__idle(self, _):
-        print("[ChatIntelligence] Ignoring on__idle")
+        self.__log.debug("Ignoring on__idle")

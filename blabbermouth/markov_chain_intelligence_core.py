@@ -3,6 +3,7 @@ import enum
 import random
 
 import attr
+import autologging
 import markovify
 
 from intelligence_core import IntelligenceCore
@@ -17,6 +18,7 @@ async def _strip_dots(iterable):
         yield entry
 
 
+@autologging.logged
 @attr.s(slots=True)
 class CachedMarkovText:
     event_loop = attr.ib()
@@ -36,14 +38,14 @@ class CachedMarkovText:
             self._schedule_new_text(knowledge_dependency)
 
         if self.sentence_is_building:
-            print("[CachedMarkovText] Sentence is building")
+            self.__log.info("Sentence is building")
             return None
 
         sentence = None
         with self._sentence_building_session():
             sentence = await self._build_sentence()
             if sentence is None:
-                print("[CachedMarkovText]: Failed to produce sentence")
+                self.__log.error("Failed to produce sentence")
 
         return sentence
 
@@ -56,7 +58,7 @@ class CachedMarkovText:
             [sentence async for sentence in _strip_dots(self.knowledge_source(knowledge_dependency))]
         )
         self.text = await self.event_loop.run_in_executor(self.worker, lambda: markovify.Text(knowledge))
-        print("[CachedMarkovText] Successfully built new text")
+        self.__log.info("Successfully built new text")
 
     @contextlib.contextmanager
     def _sentence_building_session(self):
@@ -64,7 +66,7 @@ class CachedMarkovText:
         try:
             yield
         except Exception as ex:
-            print("[CachedMarkovText] Failed to build sentence: {}".format(ex))
+            self.__log.error("[CachedMarkovText] Failed to build sentence: {}".format(ex))
         finally:
             self.sentence_is_building = False
 
@@ -76,6 +78,7 @@ class CachedMarkovText:
         )
 
 
+@autologging.logged
 @attr.s(slots=True)
 class MarkovChainIntelligenceCore(IntelligenceCore):
     class Strategy(enum.Enum):
@@ -134,7 +137,7 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
     async def _form_message(self, strategies, dependency, placeholder):
         strategy = random.choice(strategies)
 
-        print("[MarkovChainIntelligenceCore] Using {} strategy".format(strategy))
+        self.__log.info("Using {} strategy".format(strategy))
 
         sentence = await self.markov_texts_by_strategy[strategy].make_sentence(dependency)
         return sentence if sentence is not None else placeholder

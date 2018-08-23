@@ -1,8 +1,10 @@
+import autologging
 import telepot
 
 from knowledge_base import KnowledgeBase
 
 
+@autologging.logged
 class LearningHandler(telepot.aio.helper.ChatHandler):
     def __init__(self, *args, knowledge_base, self_reference_detector, bot_name, event_loop, **kwargs):
         if not isinstance(knowledge_base, KnowledgeBase):
@@ -15,7 +17,7 @@ class LearningHandler(telepot.aio.helper.ChatHandler):
         self._bot_name = bot_name
         self._event_loop = event_loop
 
-        print("[LearningHandler] Created {}".format(id(self)))
+        self.__log.info("Created {}".format(id(self)))
 
     async def on_chat_message(self, message):
         self._event_loop.create_task(self._on_chat_message(message))
@@ -36,4 +38,4 @@ class LearningHandler(telepot.aio.helper.ChatHandler):
         await self._knowledge_base.record(chat_id=chat_id, user=user, text=text)
 
     def on__idle(self, _):
-        print("[LearningHandler] Ignoring on__idle")
+        self.__log.debug("Ignoring on__idle")

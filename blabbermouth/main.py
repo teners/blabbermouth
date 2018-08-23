@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import datetime
 import concurrent.futures
+import logging
 
 import telepot
 
@@ -24,10 +25,41 @@ def parse_args():
     return parser.parse_args()
 
 
+def name_to_log_level(name):
+    return eval("logging.{}".format(name))
+
+
+def setup_logging(conf):
+    logging_conf = conf["logging"]
+
+    log_formatter = logging.Formatter(logging_conf["format"])
+
+    file_handler = logging.handlers.RotatingFileHandler(
+        logging_conf["file_handler"]["file_name"],
+        mode="a",
+        maxBytes=logging_conf["file_handler"]["limit_megabytes"] * 1024 * 1024,
+        backupCount=logging_conf["file_handler"]["backup_count"],
+        encoding=None,
+        delay=logging_conf["file_handler"]["delay"],
+    )
+    file_handler.setFormatter(log_formatter)
+    file_handler.setLevel(name_to_log_level(logging_conf["file_handler"]["log_level"]))
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(name_to_log_level(logging_conf["stream_handler"]["log_level"]))
+
+    app_log = logging.getLogger("root")
+    app_log.setLevel(logging.INFO)
+    app_log.addHandler(file_handler)
+    app_log.addHandler(stream_handler)
+
+
 def main():
     args = parse_args()
     config_env_overrides = {"is_prod": not args.dev, "token": args.token}
     conf = config.load_config("config", "env.yaml", config_env_overrides)
+
+    setup_logging(conf)
 
     bot_name = conf["bot_name"]
     bot_token = conf["token"]

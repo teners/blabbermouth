@@ -17,8 +17,6 @@ class RedditBrowser:
         self._client_headers = {"User-Agent": user_agent}
 
     async def lookup_top_posts(self, subreddit, sort_type, limit):
-        print("[RedditBrowser] Looking up top posts")
-
         url = "{}/r/{}/{}.json?limit={}".format(self._reddit_url, subreddit, sort_type.value, limit)
 
         async with aiohttp.ClientSession(headers=self._client_headers) as session:

@@ -1,11 +1,13 @@
 import random
 
 import attr
+import autologging
 
 from intelligence_core import IntelligenceCore
 from reddit_browser import FeedSortType, RedditBrowser
 
 
+@autologging.logged
 @attr.s
 class RedditChatter(IntelligenceCore):
     top_post_comments = attr.ib()
@@ -14,8 +16,6 @@ class RedditChatter(IntelligenceCore):
     sort_types = attr.ib(factory=lambda: list(FeedSortType))
 
     async def conceive(self):
-        print("[RedditChatter] Looking up top post")
-
         subreddit = random.choice(self.subreddits_of_interest)
         sort_type = random.choice(self.sort_types)
 
@@ -24,10 +24,10 @@ class RedditChatter(IntelligenceCore):
             top_post = post
             break
         else:
-            print("[RedditChatter] Top post was not found")
+            self.__log.warning("Top post was not found")
             return
 
-        print("[RedditChatter] Top post of choice is {}".format(top_post))
+        self.__log.info("Top post of choice is {}".format(top_post))
 
         return self._format_top_post_message(top_post)
 
