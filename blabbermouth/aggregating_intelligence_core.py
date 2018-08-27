@@ -16,7 +16,9 @@ class AggregatingIntelligenceCore(IntelligenceCore):
         return await self._try_cores(lambda core: core.respond(user, message))
 
     async def _try_cores(self, coro):
-        for core in random.shuffle(self.cores):
+        cores = self.cores.copy()
+        random.shuffle(cores)
+        for core in cores:
             result = await coro(core)
             if result is not None:
                 return result

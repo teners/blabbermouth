@@ -41,10 +41,12 @@ class CachedMarkovText:
             print("[CachedMarkovText] Sentence is building")
             return None
 
+        sentence = None
         with self._sentence_building_session():
             sentence = await self._build_sentence()
-        if sentence is None:
-            print("[CachedMarkovText]: Failed to produce sentence")
+            if sentence is None:
+                print("[CachedMarkovText]: Failed to produce sentence")
+
         return sentence
 
     @contextlib.contextmanager
@@ -63,9 +65,9 @@ class CachedMarkovText:
 
     async def _build_text(self, knowledge_dependency):
         knowledge = ". ".join(
-            sentence async for sentence in _strip_dots(self.knowledge_source(knowledge_dependency))
+            [sentence async for sentence in _strip_dots(self.knowledge_source(knowledge_dependency))]
         )
-        return (await self.make_async(lambda: markovify.Text(knowledge))).result()
+        return await self.make_async(lambda: markovify.Text(knowledge))
 
     @contextlib.contextmanager
     def _sentence_building_session(self):
@@ -80,7 +82,7 @@ class CachedMarkovText:
     async def _build_sentence(self):
         text = self.text
         make_sentence_attempts = self.make_sentence_attempts
-        return (await self.make_async(lambda: text.make_sentence(tries=make_sentence_attempts))).result()
+        return await self.make_async(lambda: text.make_sentence(tries=make_sentence_attempts))
 
 
 @attr.s(slots=True)

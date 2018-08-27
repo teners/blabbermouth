@@ -14,12 +14,12 @@ class MongoKnowledgeBase(KnowledgeBase):
 
     async def select_by_chat(self, chat_id):
         async for doc in self._collection.find({"chat_id": chat_id}):
-            yield doc
+            yield doc["text"]
 
     async def select_by_user(self, user):
         async for doc in self._collection.find({"user": user}):
-            yield doc
+            yield doc["text"]
 
     async def select_by_full_knowledge(self):
         async for doc in self._collection.find({}):
-            yield doc
+            yield doc["text"]

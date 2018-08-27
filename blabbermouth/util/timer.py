@@ -12,7 +12,8 @@ class Timer:
     enabled = attr.ib(default=True)
 
     def __attrs_post_init__(self):
-        self.enable()
+        self.task = asyncio.ensure_future(self._work())
+        self.enabled = True
 
     def enable(self):
         self.disable()
