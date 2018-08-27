@@ -30,4 +30,4 @@ class RedditBrowser:
         response = json.loads(response_text)
 
         for post in reversed(response["data"]["children"]):
-            yield post["data"]["permalink"]
+            yield self._reddit_url + post["data"]["permalink"]
