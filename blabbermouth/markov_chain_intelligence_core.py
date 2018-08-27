@@ -21,7 +21,7 @@ async def _strip_dots(iterable):
 class CachedMarkovText:
     make_async = attr.ib()
     knowledge_source = attr.ib()
-    make_sentence_attempts = attr.ib(default=10)
+    make_sentence_attempts = attr.ib()
     text_lifespan = attr.ib(converter=Lifespan)
     text = attr.ib(default=None)
     text_is_building = attr.ib(default=False)
