@@ -83,7 +83,7 @@ def main():
                 per_chat_id(),
                 create_open,
                 chat_intelligence.ChatIntelligence,
-                intellegince_registry=intelligence_registry,
+                intelligence_registry=intelligence_registry,
                 timeout=telepot_http_timeout,
             ),
             pave_event_space()(
