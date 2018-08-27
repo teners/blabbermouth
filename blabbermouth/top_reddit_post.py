@@ -2,8 +2,8 @@ import random
 
 import telepot
 
-from blabbermouth.reddit_browser import FeedSortType, RedditBrowser
-from blabbermouth.util.timer import Timer
+from reddit_browser import FeedSortType, RedditBrowser
+from util.timer import Timer
 
 
 class TopRedditPostHandler(telepot.aio.helper.ChatHandler):

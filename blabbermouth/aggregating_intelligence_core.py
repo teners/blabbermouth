@@ -2,7 +2,7 @@ import random
 
 import attr
 
-from blabbermouth.intelligence_core import IntelligenceCore
+from intelligence_core import IntelligenceCore
 
 
 @attr.s

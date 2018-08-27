@@ -3,8 +3,8 @@ import random
 
 import telepot
 
-from blabbermouth.util.chain import BrokenChain, check, not_none
-from blabbermouth.util.timer import Timer
+from util.chain import BrokenChain, check, not_none
+from util.timer import Timer
 
 
 class ChatterHandler(telepot.aio.helper.ChatHandler):

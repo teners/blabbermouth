@@ -8,13 +8,13 @@ import telepot
 from telepot.aio.loop import MessageLoop
 from telepot.aio.delegate import per_chat_id, create_open, pave_event_space
 
-from blabbermouth import chatter_handler, chat_intelligence, deaf_detector, learning_handler
-from blabbermouth.aggregating_intelligence_core import AggregatingIntelligenceCore
-from blabbermouth.markov_chain_intelligence_core import MarkovChainIntelligenceCore
-from blabbermouth.mongo_knowledge_base import MongoKnowledgeBase
-from blabbermouth.reddit_browser import RedditBrowser
-from blabbermouth.reddit_chatter import RedditChatter
-from blabbermouth.util import config, query_detector
+import chatter_handler, chat_intelligence, deaf_detector, learning_handler
+from aggregating_intelligence_core import AggregatingIntelligenceCore
+from markov_chain_intelligence_core import MarkovChainIntelligenceCore
+from mongo_knowledge_base import MongoKnowledgeBase
+from reddit_browser import RedditBrowser
+from reddit_chatter import RedditChatter
+from util import config, query_detector
 
 
 def parse_args():

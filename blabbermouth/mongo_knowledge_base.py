@@ -1,6 +1,6 @@
 import motor.motor_asyncio
 
-from blabbermouth.knowledge_base import KnowledgeBase
+from knowledge_base import KnowledgeBase
 
 
 class MongoKnowledgeBase(KnowledgeBase):

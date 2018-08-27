@@ -5,9 +5,9 @@ import random
 import attr
 import markovify
 
-from blabbermouth.intelligence_core import IntelligenceCore
-from blabbermouth.knowledge_base import KnowledgeBase
-from blabbermouth.util.lifespan import Lifespan
+from intelligence_core import IntelligenceCore
+from knowledge_base import KnowledgeBase
+from util.lifespan import Lifespan
 
 
 async def _strip_dots(iterable):

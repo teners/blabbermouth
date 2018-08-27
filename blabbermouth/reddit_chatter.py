@@ -2,8 +2,8 @@ import random
 
 import attr
 
-from blabbermouth.intelligence_core import IntelligenceCore
-from blabbermouth.reddit_browser import FeedSortType, RedditBrowser
+from intelligence_core import IntelligenceCore
+from reddit_browser import FeedSortType, RedditBrowser
 
 
 @attr.s

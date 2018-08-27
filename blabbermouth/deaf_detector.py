@@ -3,7 +3,7 @@ import re
 import attr
 import telepot
 
-from blabbermouth.util.chain import BrokenChain, check, not_none
+from util.chain import BrokenChain, check, not_none
 
 
 class PreviousMessageRetriever:
