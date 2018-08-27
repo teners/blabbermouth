@@ -102,7 +102,9 @@ def main():
                 intelligence_registry=intelligence_registry,
                 self_reference_detector=query_detector.self_reference_detector(bot_name),
                 personal_query_detector=query_detector.personal_query_detector(bot_name),
-                conceive_interval=conf["chatter_handler"]["conceive_interval"],
+                conceive_interval=datetime.timedelta(
+                    hours=conf["chatter_handler"]["conceive_interval_hours"]
+                ),
                 timeout=telepot_http_timeout,
             ),
         ],
