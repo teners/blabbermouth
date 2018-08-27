@@ -10,6 +10,13 @@ from blabbermouth.knowledge_base import KnowledgeBase
 from blabbermouth.util.lifespan import Lifespan
 
 
+async def _strip_dots(iterable):
+    async for entry in iterable:
+        if entry.endswith("."):
+            yield entry[:-1]
+        yield entry
+
+
 @attr.s(slots=True)
 class CachedMarkovText:
     make_async = attr.ib()
@@ -55,7 +62,9 @@ class CachedMarkovText:
             self.text_is_building = False
 
     async def _build_text(self, knowledge_dependency):
-        knowledge = ". ".join(sentence async for sentence in self.knowledge_source(knowledge_dependency))
+        knowledge = ". ".join(
+            sentence async for sentence in _strip_dots(self.knowledge_source(knowledge_dependency))
+        )
         return (await self.make_async(lambda: markovify.Text(knowledge))).result()
 
     @contextlib.contextmanager
