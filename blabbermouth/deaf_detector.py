@@ -1,4 +1,3 @@
-import asyncio
 import re
 
 import attr
@@ -98,7 +97,7 @@ class DeafDetectorHandler(telepot.aio.helper.ChatHandler):
         print("[DeafDetectorHandler] Created {}".format(id(self)))
 
     async def on_chat_message(self, message):
-        asyncio.ensure_future(self._on_chat_message(message), loop=self._event_loop)
+        self._event_loop.create_task(self._on_chat_message(message))
 
     async def _on_chat_message(self, message):
         try:

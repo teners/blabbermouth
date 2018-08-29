@@ -1,4 +1,3 @@
-import asyncio
 import contextlib
 import enum
 import random
@@ -49,7 +48,7 @@ class CachedMarkovText:
         return sentence
 
     def _schedule_new_text(self, knowledge_dependency):
-        asyncio.ensure_future(self._build_text(knowledge_dependency), loop=self.event_loop)
+        self.event_loop.create_task(self._build_text(knowledge_dependency))
         self.text_lifespan.reset()
 
     async def _build_text(self, knowledge_dependency):

@@ -1,5 +1,3 @@
-import asyncio
-
 import telepot
 
 from knowledge_base import KnowledgeBase
@@ -20,7 +18,7 @@ class LearningHandler(telepot.aio.helper.ChatHandler):
         print("[LearningHandler] Created {}".format(id(self)))
 
     async def on_chat_message(self, message):
-        asyncio.ensure_future(self._on_chat_message(message), loop=self._event_loop)
+        self._event_loop.create_task(self._on_chat_message(message))
 
     async def _on_chat_message(self, message):
         text = message.get("text")

@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import random
 
@@ -31,7 +30,7 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
         print("[ChatterHandler] Created {}".format(id(self)))
 
     async def on_chat_message(self, message):
-        asyncio.ensure_future(self._on_chat_message(message), loop=self._event_loop)
+        self._event_loop.create_task(self._on_chat_message(message))
 
     async def _on_chat_message(self, message):
         try:
