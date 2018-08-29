@@ -1,10 +1,12 @@
+import asyncio
+
 import telepot
 
 from knowledge_base import KnowledgeBase
 
 
 class LearningHandler(telepot.aio.helper.ChatHandler):
-    def __init__(self, *args, knowledge_base, self_reference_detector, bot_name, **kwargs):
+    def __init__(self, *args, knowledge_base, self_reference_detector, bot_name, event_loop, **kwargs):
         if not isinstance(knowledge_base, KnowledgeBase):
             raise TypeError("knowledge_base must be KnowledgeBase")
 
@@ -13,10 +15,14 @@ class LearningHandler(telepot.aio.helper.ChatHandler):
         self._knowledge_base = knowledge_base
         self._self_reference_detector = self_reference_detector
         self._bot_name = bot_name
+        self._event_loop = event_loop
 
         print("[LearningHandler] Created {}".format(id(self)))
 
     async def on_chat_message(self, message):
+        asyncio.ensure_future(self._on_chat_message(message), loop=self._event_loop)
+
+    async def _on_chat_message(self, message):
         text = message.get("text")
         if text is None:
             return

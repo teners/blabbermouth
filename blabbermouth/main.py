@@ -77,7 +77,11 @@ def main():
         bot_token,
         [
             pave_event_space()(
-                per_chat_id(), create_open, deaf_detector.DeafDetectorHandler, timeout=telepot_http_timeout
+                per_chat_id(),
+                create_open,
+                deaf_detector.DeafDetectorHandler,
+                event_loop=event_loop,
+                timeout=telepot_http_timeout,
             ),
             pave_event_space()(
                 per_chat_id(),
@@ -93,6 +97,7 @@ def main():
                 knowledge_base=knowledge_base,
                 self_reference_detector=query_detector.self_reference_detector(bot_name),
                 bot_name=bot_name,
+                event_loop=event_loop,
                 timeout=telepot_http_timeout,
             ),
             pave_event_space()(
@@ -105,6 +110,7 @@ def main():
                 conceive_interval=datetime.timedelta(
                     hours=conf["chatter_handler"]["conceive_interval_hours"]
                 ),
+                event_loop=event_loop,
                 timeout=telepot_http_timeout,
             ),
         ],

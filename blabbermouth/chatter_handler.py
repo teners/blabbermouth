@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import random
 
@@ -15,6 +16,7 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
         self_reference_detector,
         personal_query_detector,
         conceive_interval,
+        event_loop,
         **kwargs
     ):
         super(ChatterHandler, self).__init__(*args, **kwargs)
@@ -22,12 +24,16 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
         self._intelligence_registry = intelligence_registry
         self._self_reference_detector = self_reference_detector
         self._personal_quary_detector = personal_query_detector
+        self._event_loop = event_loop
         self._conceive_interval = conceive_interval
         self._conceive_timer = Timer(callback=self._conceive, interval=self._randomize_conceive_interval())
 
         print("[ChatterHandler] Created {}".format(id(self)))
 
     async def on_chat_message(self, message):
+        asyncio.ensure_future(self._on_chat_message(message), loop=self._event_loop)
+
+    async def _on_chat_message(self, message):
         try:
             check(self._self_reference_detector(message))
             source = not_none(message.get("from"))
