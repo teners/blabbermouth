@@ -47,7 +47,7 @@ class PreviousMessageRetriever:
 
 
 class DeafDetector:
-    WHAT_REGEX = re.compile(r"^[ч|ш]т?[о|а|ё|е](\s(блять|бля|нахуй))?\.?$", re.IGNORECASE)
+    WHAT_REGEX = re.compile(r"^([ч|ш]т?[о|а|ё|е]|ч[е|и][г|в]о)(\s(блять|бля|нахуй))?\.?$", re.IGNORECASE)
 
     TO_THIRD_CONVERSION_MAP = {"я": "Он", "меня": "Его", "мне": "Ему", "мной": "Им"}
 
