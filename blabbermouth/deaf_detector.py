@@ -27,6 +27,9 @@ class PreviousMessageRetriever:
     def record(self, text, user):
         self._previous_info = self.Info(text=text, user=user)
 
+    def clean(self):
+        self._previous_info = None
+
     def _try_retrieve_from_reply(self, message, **_):
         try:
             reply = not_none(message.get("reply_to_message"))
@@ -40,7 +43,7 @@ class PreviousMessageRetriever:
     def _try_infer_from_previous_message(self, user, **_):
         try:
             not_none(self._previous_info)
-            check(self._previous_info.user == user)
+            check(self._previous_info.user != user)
             return self._previous_info
         except BrokenChain:
             return None
@@ -60,15 +63,21 @@ class DeafDetector:
             text = not_none(message.get("text"))
             source = not_none(message.get("from"))
             user = not_none(source.get("username"))
-
-            self._previous_message_retriever.record(user, text)
-            not_none(re.match(self.WHAT_REGEX, text))
-            self._previous_message_retriever.record(user=None, text=None)
-
-            previous_message = not_none(self._previous_message_retriever.retrieve(message, user, text))
-            return self._reply_to_deaf(previous_message.text, previous_message.user)
         except BrokenChain:
             return None
+
+        if re.match(self.WHAT_REGEX, text) is None:
+            self._previous_message_retriever.record(text, user)
+            return None
+
+        try:
+            previous_message = not_none(self._previous_message_retriever.retrieve(message, text, user))
+        except BrokenChain:
+            return None
+
+        self._previous_message_retriever.clean()
+
+        return self._reply_to_deaf(previous_message.text, previous_message.user)
 
     def _reply_to_deaf(self, previous_message, deaf_user):
         print("[DeafDetector] Replying to {}".format(deaf_user))
