@@ -50,7 +50,8 @@ def main():
         return AggregatingIntelligenceCore(
             cores=[
                 MarkovChainIntelligenceCore(
-                    make_async=lambda func: event_loop.run_in_executor(markov_chain_worker, func),
+                    event_loop=event_loop,
+                    worker=markov_chain_worker,
                     chat_id=chat_id,
                     knowledge_base=knowledge_base,
                     knowledge_lifespan=datetime.timedelta(

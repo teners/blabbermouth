@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import enum
 import random
@@ -19,23 +20,21 @@ async def _strip_dots(iterable):
 
 @attr.s(slots=True)
 class CachedMarkovText:
-    make_async = attr.ib()
+    event_loop = attr.ib()
+    worker = attr.ib()
     knowledge_source = attr.ib()
     make_sentence_attempts = attr.ib()
     text_lifespan = attr.ib(converter=Lifespan)
     text = attr.ib(default=None)
-    text_is_building = attr.ib(default=False)
     sentence_is_building = attr.ib(default=False)
 
     async def make_sentence(self, knowledge_dependency):
-        if self.text is None and self.text_is_building:
-            print("[CachedMarkovText] First text is currently building")
-            return None
+        if self.text is None:
+            self.text = markovify.Text(".")
+            self._schedule_new_text(knowledge_dependency)
 
-        if (self.text is None or not self.text_lifespan) and not self.text_is_building:
-            with self._text_building_session():
-                self.text = await self._build_text(knowledge_dependency)
-                self.text_lifespan.reset()
+        if not self.text_lifespan:
+            self._schedule_new_text(knowledge_dependency)
 
         if self.sentence_is_building:
             print("[CachedMarkovText] Sentence is building")
@@ -49,25 +48,16 @@ class CachedMarkovText:
 
         return sentence
 
-    @contextlib.contextmanager
-    def _text_building_session(self):
-        print("[CachedMarkovText] Building new text")
-
-        self.text_is_building = True
-        try:
-            yield
-        except Exception as ex:
-            print("[CachedMarkovText] Failed to build new text: {}".format(ex))
-        else:
-            print("[CachedMarkovText] Successfully built new text")
-        finally:
-            self.text_is_building = False
+    def _schedule_new_text(self, knowledge_dependency):
+        asyncio.ensure_future(self._build_text(knowledge_dependency), loop=self.event_loop)
+        self.text_lifespan.reset()
 
     async def _build_text(self, knowledge_dependency):
         knowledge = ". ".join(
             [sentence async for sentence in _strip_dots(self.knowledge_source(knowledge_dependency))]
         )
-        return await self.make_async(lambda: markovify.Text(knowledge))
+        self.text = await self.event_loop.run_in_executor(self.worker, lambda: markovify.Text(knowledge))
+        print("[CachedMarkovText] Successfully built new text")
 
     @contextlib.contextmanager
     def _sentence_building_session(self):
@@ -82,7 +72,9 @@ class CachedMarkovText:
     async def _build_sentence(self):
         text = self.text
         make_sentence_attempts = self.make_sentence_attempts
-        return await self.make_async(lambda: text.make_sentence(tries=make_sentence_attempts))
+        return await self.event_loop.run_in_executor(
+            self.worker, lambda: text.make_sentence(tries=make_sentence_attempts)
+        )
 
 
 @attr.s(slots=True)
@@ -92,7 +84,8 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
         BY_CURRENT_USER = enum.auto()
         BY_FULL_KNOWLEDGE = enum.auto()
 
-    make_async = attr.ib()
+    event_loop = attr.ib()
+    worker = attr.ib()
     chat_id = attr.ib()
     knowledge_base = attr.ib(validator=attr.validators.instance_of(KnowledgeBase))
     knowledge_lifespan = attr.ib()
@@ -105,7 +98,8 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
 
         self.markov_texts_by_strategy = {
             p[0]: CachedMarkovText(
-                make_async=self.make_async,
+                event_loop=self.event_loop,
+                worker=self.worker,
                 knowledge_source=p[1],
                 make_sentence_attempts=self.make_sentence_attempts,
                 text_lifespan=self.knowledge_lifespan,
