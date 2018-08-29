@@ -116,7 +116,9 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
 
     async def conceive(self):
         return await self._form_message(
-            strategies=[self.Strategy.BY_CURRENT_CHAT, self.Strategy.BY_FULL_KNOWLEDGE], dependency={}
+            strategies=[self.Strategy.BY_CURRENT_CHAT, self.Strategy.BY_FULL_KNOWLEDGE],
+            dependency={},
+            placeholder=None,
         )
 
     async def respond(self, user, message):
@@ -127,12 +129,13 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
                 self.Strategy.BY_FULL_KNOWLEDGE,
             ],
             dependency={"user": user},
+            placeholder=self.answer_placeholder,
         )
 
-    async def _form_message(self, strategies, dependency):
+    async def _form_message(self, strategies, dependency, placeholder):
         strategy = random.choice(strategies)
 
         print("[MarkovChainIntelligenceCore] Using {} strategy".format(strategy))
 
         sentence = await self.markov_texts_by_strategy[strategy].make_sentence(dependency)
-        return sentence if sentence is not None else self.answer_placeholder
+        return sentence if sentence is not None else placeholder
