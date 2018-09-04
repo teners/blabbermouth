@@ -1,13 +1,13 @@
 import random
 
 import attr
-import autologging
 
 from intelligence_core import IntelligenceCore
 from reddit_browser import FeedSortType, RedditBrowser
+from util.log import logged
 
 
-@autologging.logged
+@logged
 @attr.s
 class RedditChatter(IntelligenceCore):
     top_post_comments = attr.ib()
@@ -24,10 +24,10 @@ class RedditChatter(IntelligenceCore):
             top_post = post
             break
         else:
-            self.__log.warning("Top post was not found")
+            self._log.warning("Top post was not found")
             return
 
-        self.__log.info("Top post of choice is {}".format(top_post))
+        self._log.info("Top post of choice is {}".format(top_post))
 
         return self._format_top_post_message(top_post)
 

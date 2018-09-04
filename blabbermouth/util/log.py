@@ -1,16 +1,15 @@
 import logging
 import logging.handlers
 
-import autologging
-
 
 _REGISTERED_LOGGERS = []
 
 
 def logged(cls):
-    decorated = autologging.logged(cls)
-    _REGISTERED_LOGGERS.append(eval("decorated._{}__log".format(decorated.__name__)))
-    return decorated
+    logger = logging.getLogger(cls.__name__)
+    _REGISTERED_LOGGERS.append(logger)
+    cls._log = logger
+    return cls
 
 
 def name_to_log_level(name):

@@ -17,7 +17,7 @@ class LearningHandler(telepot.aio.helper.ChatHandler):
         self._bot_name = bot_name
         self._event_loop = event_loop
 
-        self.__log.info("Created {}".format(id(self)))
+        self._log.info("Created {}".format(id(self)))
 
     async def on_chat_message(self, message):
         self._event_loop.create_task(self._on_chat_message(message))
@@ -38,4 +38,4 @@ class LearningHandler(telepot.aio.helper.ChatHandler):
         await self._knowledge_base.record(chat_id=chat_id, user=user, text=text)
 
     def on__idle(self, _):
-        self.__log.debug("Ignoring on__idle")
+        self._log.debug("Ignoring on__idle")

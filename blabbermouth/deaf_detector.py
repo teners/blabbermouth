@@ -82,7 +82,7 @@ class DeafDetector:
         return self._reply_to_deaf(previous_message.text, previous_message.user)
 
     def _reply_to_deaf(self, previous_message, deaf_user):
-        self.__log.info("Replying to {}".format(deaf_user))
+        self._log.info("Replying to {}".format(deaf_user))
 
         return " ".join([self._convert_to_third(word) for word in previous_message.split(" ")])
 
@@ -98,7 +98,7 @@ class DeafDetectorHandler(telepot.aio.helper.ChatHandler):
         self._event_loop = event_loop
         self._backend = DeafDetector()
 
-        self.__log.info("Created {}".format(id(self)))
+        self._log.info("Created {}".format(id(self)))
 
     async def on_chat_message(self, message):
         self._event_loop.create_task(self._on_chat_message(message))
@@ -111,4 +111,4 @@ class DeafDetectorHandler(telepot.aio.helper.ChatHandler):
             pass
 
     def on__idle(self, _):
-        self.__log.debug("Ignoring on__idle")
+        self._log.debug("Ignoring on__idle")

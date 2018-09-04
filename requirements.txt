@@ -2,7 +2,6 @@ black
 flake8
 pylint
 
-autologging
 jinja2
 markovify
 motor

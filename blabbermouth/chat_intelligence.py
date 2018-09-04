@@ -23,10 +23,10 @@ class ChatIntelligence(telepot.aio.helper.ChatHandler):
 
         intelligence_registry.create_core(self.chat_id)
 
-        self.__log.info("Created {}".format(id(self)))
+        self._log.info("Created {}".format(id(self)))
 
     async def on_chat_message(self, message):
         pass
 
     def on__idle(self, _):
-        self.__log.debug("Ignoring on__idle")
+        self._log.debug("Ignoring on__idle")
