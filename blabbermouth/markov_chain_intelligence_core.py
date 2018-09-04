@@ -3,12 +3,12 @@ import enum
 import random
 
 import attr
-import autologging
 import markovify
 
 from intelligence_core import IntelligenceCore
 from knowledge_base import KnowledgeBase
 from util.lifespan import Lifespan
+from util.log import logged
 
 
 async def _strip_dots(iterable):
@@ -18,7 +18,7 @@ async def _strip_dots(iterable):
         yield entry
 
 
-@autologging.logged
+@logged
 @attr.s(slots=True)
 class CachedMarkovText:
     event_loop = attr.ib()
@@ -78,7 +78,7 @@ class CachedMarkovText:
         )
 
 
-@autologging.logged
+@logged
 @attr.s(slots=True)
 class MarkovChainIntelligenceCore(IntelligenceCore):
     class Strategy(enum.Enum):

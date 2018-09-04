@@ -7,5 +7,5 @@ file_handler:
     delay: 0
     log_level: INFO
 
-stream_hander:
+stream_handler:
     log_level: INFO

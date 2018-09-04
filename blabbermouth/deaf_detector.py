@@ -1,13 +1,13 @@
 import re
 
 import attr
-import autologging
 import telepot
 
 from util.chain import BrokenChain, check, not_none
+from util.log import logged
 
 
-@autologging.logged
+@logged
 class PreviousMessageRetriever:
     @attr.s(slots=True, frozen=True)
     class Info:
@@ -50,6 +50,7 @@ class PreviousMessageRetriever:
             return None
 
 
+@logged
 class DeafDetector:
     WHAT_REGEX = re.compile(r"^([ч|ш]т?[о|а|ё|е]|ч[е|и][г|в]о)(\s(блять|бля|нахуй))?\.?$", re.IGNORECASE)
 
@@ -89,6 +90,7 @@ class DeafDetector:
         return self.TO_THIRD_CONVERSION_MAP.get(word.lower(), word)
 
 
+@logged
 class DeafDetectorHandler(telepot.aio.helper.ChatHandler):
     def __init__(self, *args, event_loop, **kwargs):
         super(DeafDetectorHandler, self).__init__(*args, **kwargs)

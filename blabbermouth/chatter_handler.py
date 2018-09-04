@@ -1,14 +1,14 @@
 import datetime
 import random
 
-import autologging
 import telepot
 
 from util.chain import BrokenChain, check, not_none
+from util.log import logged
 from util.timer import Timer
 
 
-@autologging.logged
+@logged
 class ChatterHandler(telepot.aio.helper.ChatHandler):
     def __init__(
         self,
@@ -38,7 +38,7 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
         try:
             check(self._self_reference_detector(message))
             source = not_none(message.get("from"))
-            user = not_one(source.get("username"))
+            user = not_none(source.get("username"))
         except BrokenChain:
             return
 

@@ -1,6 +1,7 @@
 import attr
-import autologging
 import telepot
+
+from util.log import logged
 
 
 @attr.s
@@ -15,7 +16,7 @@ class IntelligenceRegistry:
         return self.cores[chat_id]
 
 
-@autologging.logged
+@logged
 class ChatIntelligence(telepot.aio.helper.ChatHandler):
     def __init__(self, *args, intelligence_registry, **kwargs):
         super(ChatIntelligence, self).__init__(*args, **kwargs)

@@ -1,10 +1,10 @@
-import autologging
 import telepot
 
 from knowledge_base import KnowledgeBase
+from util.log import logged
 
 
-@autologging.logged
+@logged
 class LearningHandler(telepot.aio.helper.ChatHandler):
     def __init__(self, *args, knowledge_base, self_reference_detector, bot_name, event_loop, **kwargs):
         if not isinstance(knowledge_base, KnowledgeBase):
