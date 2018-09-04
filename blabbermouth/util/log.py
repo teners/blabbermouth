@@ -13,7 +13,7 @@ def logged(cls):
 
 
 def name_to_log_level(name):
-    return eval("logging.{}".format(name))
+    return getattr(logging, name)
 
 
 def setup_logging(conf):
