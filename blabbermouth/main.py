@@ -14,7 +14,7 @@ from markov_chain_intelligence_core import MarkovChainIntelligenceCore
 from mongo_knowledge_base import MongoKnowledgeBase
 from reddit_browser import RedditBrowser
 from reddit_chatter import RedditChatter
-from util import config, query_detector
+from util import config, log, query_detector
 
 
 def parse_args():
@@ -28,6 +28,8 @@ def main():
     args = parse_args()
     config_env_overrides = {"is_prod": not args.dev, "token": args.token}
     conf = config.load_config("config", "env.yaml", config_env_overrides)
+
+    log.setup_logging(conf)
 
     bot_name = conf["bot_name"]
     bot_token = conf["token"]

@@ -4,9 +4,11 @@ import random
 import telepot
 
 from util.chain import BrokenChain, check, not_none
+from util.log import logged
 from util.timer import Timer
 
 
+@logged
 class ChatterHandler(telepot.aio.helper.ChatHandler):
     def __init__(
         self,
@@ -27,7 +29,7 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
         self._conceive_interval = conceive_interval
         self._conceive_timer = Timer(callback=self._conceive, interval=self._randomize_conceive_interval())
 
-        print("[ChatterHandler] Created {}".format(id(self)))
+        self.__log.info("Created {}".format(id(self)))
 
     async def on_chat_message(self, message):
         self._event_loop.create_task(self._on_chat_message(message))
@@ -40,26 +42,26 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
         except BrokenChain:
             return
 
-        print("[ChatterHandler] User {} in chat {} is talking to me".format(user, self.chat_id))
+        self.__log.info("User {} in chat {} is talking to me".format(user, self.chat_id))
 
         intelligence_core = self._intelligence_registry.get_core(self.chat_id)
 
         answer = await intelligence_core.respond(user=user, message=message.get("text", ""))
         if answer is None:
-            print('[ChatterHandler] Got "None" answer from intelligence core')
+            self.__log.info('Got "None" answer from intelligence core')
             return
 
         await self.sender.sendMessage(answer)
 
     def on__idle(self, _):
-        print("[ChatterHandler] Ignoring on__idle")
+        self.__log.debug("Ignoring on__idle")
 
     async def _conceive(self):
         intelligence_core = self._intelligence_registry.get_core(self.chat_id)
 
         thought = await intelligence_core.conceive()
         if thought is None:
-            print("[ChatterHandler] No new thoughts from intellegence core")
+            self.__log.info("No new thoughts from intellegence core")
             return
 
         await self.sender.sendMessage(thought)
