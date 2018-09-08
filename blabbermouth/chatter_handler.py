@@ -3,6 +3,7 @@ import random
 
 import telepot
 
+from thought import Type as ThoughtType
 from util.chain import BrokenChain, check, not_none
 from util.log import logged
 from util.timer import Timer
@@ -51,7 +52,7 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
             self._log.info('Got "None" answer from intelligence core')
             return
 
-        await self.sender.sendMessage(answer)
+        await self._send_thought(answer)
 
     def on__idle(self, _):
         self._log.debug("Ignoring on__idle")
@@ -64,9 +65,19 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
             self._log.info("No new thoughts from intellegence core")
             return
 
-        await self.sender.sendMessage(thought)
+        await self._send_thought(thought)
 
         self._conceive_timer.interval = self._randomize_conceive_interval()
 
     def _randomize_conceive_interval(self):
         return datetime.timedelta(seconds=random.uniform(0, self._conceive_interval.total_seconds()))
+
+    async def _send_thought(self, thought):
+        if thought.thought_type == ThoughtType.TEXT:
+            sender = self.sender.sendMessage
+        elif thought.thought_type == ThoughtType.SPEECH:
+            sender = self.sender.sendVoice
+        else:
+            raise ValueError("Unexpected thought type: {}".format(thought.thought_type))
+
+        await sender(thought.payload)
