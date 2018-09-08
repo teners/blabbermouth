@@ -38,7 +38,7 @@ def main():
 
     telepot.aio.api.set_proxy(conf["core"]["proxy"])
 
-    knowledge_base = MongoKnowledgeBase(
+    knowledge_base = MongoKnowledgeBase.build(
         host=conf["mongo_knowledge_base"]["db_host"],
         port=conf["mongo_knowledge_base"]["db_port"],
         db_name=conf["mongo_knowledge_base"]["db_name"],
