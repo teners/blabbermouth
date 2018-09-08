@@ -38,7 +38,7 @@ def main():
 
     telepot.aio.api.set_proxy(conf["core"]["proxy"])
 
-    knowledge_base = MongoKnowledgeBase(
+    knowledge_base = MongoKnowledgeBase.build(
         host=conf["mongo_knowledge_base"]["db_host"],
         port=conf["mongo_knowledge_base"]["db_port"],
         db_name=conf["mongo_knowledge_base"]["db_name"],
@@ -51,7 +51,7 @@ def main():
     def main_intelligence_core_constructor(chat_id):
         return AggregatingIntelligenceCore(
             cores=[
-                MarkovChainIntelligenceCore(
+                MarkovChainIntelligenceCore.build(
                     event_loop=event_loop,
                     worker=markov_chain_worker,
                     chat_id=chat_id,

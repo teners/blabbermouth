@@ -1,5 +1,6 @@
 import contextlib
 import enum
+import functools
 import random
 
 import attr
@@ -26,16 +27,15 @@ class CachedMarkovText:
     knowledge_source = attr.ib()
     make_sentence_attempts = attr.ib()
     text_lifespan = attr.ib(converter=Lifespan)
-    text = attr.ib(default=None)
+    text = attr.ib(factory=lambda: markovify.Text("."))
     sentence_is_building = attr.ib(default=False)
 
-    async def make_sentence(self, knowledge_dependency):
-        if self.text is None:
-            self.text = markovify.Text(".")
-            self._schedule_new_text(knowledge_dependency)
+    def __attrs_post_init__(self):
+        self._schedule_new_text()
 
+    async def make_sentence(self):
         if not self.text_lifespan:
-            self._schedule_new_text(knowledge_dependency)
+            self._schedule_new_text()
 
         if self.sentence_is_building:
             self._log.info("Sentence is building")
@@ -49,14 +49,12 @@ class CachedMarkovText:
 
         return sentence
 
-    def _schedule_new_text(self, knowledge_dependency):
-        self.event_loop.create_task(self._build_text(knowledge_dependency))
+    def _schedule_new_text(self):
+        self.event_loop.create_task(self._build_text())
         self.text_lifespan.reset()
 
-    async def _build_text(self, knowledge_dependency):
-        knowledge = ". ".join(
-            [sentence async for sentence in _strip_dots(self.knowledge_source(knowledge_dependency))]
-        )
+    async def _build_text(self):
+        knowledge = ". ".join([sentence async for sentence in _strip_dots(self.knowledge_source())])
         self.text = await self.event_loop.run_in_executor(self.worker, lambda: markovify.Text(knowledge))
         self._log.info("Successfully built new text")
 
@@ -79,48 +77,53 @@ class CachedMarkovText:
 
 
 @logged
-@attr.s(slots=True)
+@attr.s(slots=True, frozen=True)
 class MarkovChainIntelligenceCore(IntelligenceCore):
     class Strategy(enum.Enum):
         BY_CURRENT_CHAT = enum.auto()
         BY_CURRENT_USER = enum.auto()
         BY_FULL_KNOWLEDGE = enum.auto()
 
-    event_loop = attr.ib()
-    worker = attr.ib()
-    chat_id = attr.ib()
     knowledge_base = attr.ib(validator=attr.validators.instance_of(KnowledgeBase))
-    knowledge_lifespan = attr.ib()
-    make_sentence_attempts = attr.ib()
     answer_placeholder = attr.ib()
-    markov_texts_by_strategy = attr.ib(dict)
+    text_constructor = attr.ib()
+    markov_texts = attr.ib()
 
-    def __attrs_post_init__(self):
-        chat_id = self.chat_id
-
-        self.markov_texts_by_strategy = {
-            p[0]: CachedMarkovText(
-                event_loop=self.event_loop,
-                worker=self.worker,
-                knowledge_source=p[1],
-                make_sentence_attempts=self.make_sentence_attempts,
-                text_lifespan=self.knowledge_lifespan,
-            )
-            for p in [
-                (self.Strategy.BY_CURRENT_CHAT, lambda _: self.knowledge_base.select_by_chat(chat_id)),
-                (
-                    self.Strategy.BY_CURRENT_USER,
-                    lambda dependency: self.knowledge_base.select_by_user(dependency["user"]),
+    @classmethod
+    def build(
+        cls,
+        event_loop,
+        worker,
+        chat_id,
+        knowledge_base,
+        knowledge_lifespan,
+        make_sentence_attempts,
+        answer_placeholder,
+    ):
+        text_constructor = functools.partial(
+            CachedMarkovText,
+            event_loop=event_loop,
+            worker=worker,
+            make_sentence_attempts=make_sentence_attempts,
+            text_lifespan=knowledge_lifespan,
+        )
+        return cls(
+            knowledge_base=knowledge_base,
+            answer_placeholder=answer_placeholder,
+            text_constructor=text_constructor,
+            markov_texts={
+                cls.Strategy.BY_CURRENT_CHAT: text_constructor(
+                    knowledge_source=functools.partial(knowledge_base.select_by_chat, chat_id)
                 ),
-                (self.Strategy.BY_FULL_KNOWLEDGE, lambda _: self.knowledge_base.select_by_full_knowledge()),
-            ]
-        }
+                cls.Strategy.BY_FULL_KNOWLEDGE: text_constructor(
+                    knowledge_source=knowledge_base.select_by_full_knowledge
+                ),
+            },
+        )
 
     async def conceive(self):
         return await self._form_message(
-            strategies=[self.Strategy.BY_CURRENT_CHAT, self.Strategy.BY_FULL_KNOWLEDGE],
-            dependency={},
-            placeholder=None,
+            strategies=[self.Strategy.BY_CURRENT_CHAT, self.Strategy.BY_FULL_KNOWLEDGE]
         )
 
     async def respond(self, user, message):
@@ -130,14 +133,22 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
                 self.Strategy.BY_CURRENT_USER,
                 self.Strategy.BY_FULL_KNOWLEDGE,
             ],
-            dependency={"user": user},
             placeholder=self.answer_placeholder,
+            user=user,
         )
 
-    async def _form_message(self, strategies, dependency, placeholder):
+    async def _form_message(self, strategies, placeholder=None, user=None):
         strategy = random.choice(strategies)
+        if strategy == self.Strategy.BY_CURRENT_USER:
+            text_key = (strategy, user)
+            if text_key not in self.markov_texts:
+                self.markov_texts[text_key] = self.text_constructor(
+                    knowledge_source=functools.partial(self.knowledge_base.select_by_user, user)
+                )
+        else:
+            text_key = strategy
 
-        self._log.info("Using {} strategy".format(strategy))
+        self._log.info("Using text for {}".format(text_key))
 
-        sentence = await self.markov_texts_by_strategy[strategy].make_sentence(dependency)
+        sentence = await self.markov_texts[text_key].make_sentence()
         return sentence if sentence is not None else placeholder
