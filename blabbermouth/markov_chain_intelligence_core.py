@@ -27,14 +27,13 @@ class CachedMarkovText:
     knowledge_source = attr.ib()
     make_sentence_attempts = attr.ib()
     text_lifespan = attr.ib(converter=Lifespan)
-    text = attr.ib(default=None)
+    text = attr.ib(factory=lambda: markovify.Text("."))
     sentence_is_building = attr.ib(default=False)
 
-    async def make_sentence(self):
-        if self.text is None:
-            self.text = markovify.Text(".")
-            self._schedule_new_text()
+    def __attrs_post_init__(self):
+        self._schedule_new_text()
 
+    async def make_sentence(self):
         if not self.text_lifespan:
             self._schedule_new_text()
 
