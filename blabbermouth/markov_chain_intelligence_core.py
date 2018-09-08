@@ -84,32 +84,42 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
         BY_CURRENT_USER = enum.auto()
         BY_FULL_KNOWLEDGE = enum.auto()
 
-    event_loop = attr.ib()
-    worker = attr.ib()
-    chat_id = attr.ib()
     knowledge_base = attr.ib(validator=attr.validators.instance_of(KnowledgeBase))
-    knowledge_lifespan = attr.ib()
-    make_sentence_attempts = attr.ib()
     answer_placeholder = attr.ib()
-    text_constructor = attr.ib(default=None)
-    markov_texts = attr.ib(factory=dict)
+    text_constructor = attr.ib()
+    markov_texts = attr.ib()
 
-    def __attrs_post_init__(self):
-        self.text_constructor = functools.partial(
+    @classmethod
+    def build(
+        cls,
+        event_loop,
+        worker,
+        chat_id,
+        knowledge_base,
+        knowledge_lifespan,
+        make_sentence_attempts,
+        answer_placeholder,
+    ):
+        text_constructor = functools.partial(
             CachedMarkovText,
-            event_loop=self.event_loop,
-            worker=self.worker,
-            make_sentence_attempts=self.make_sentence_attempts,
-            text_lifespan=self.knowledge_lifespan,
+            event_loop=event_loop,
+            worker=worker,
+            make_sentence_attempts=make_sentence_attempts,
+            text_lifespan=knowledge_lifespan,
         )
-        self.markov_texts = {
-            self.Strategy.BY_CURRENT_CHAT: self.text_constructor(
-                knowledge_source=functools.partial(self.knowledge_base.select_by_chat, self.chat_id)
-            ),
-            self.Strategy.BY_FULL_KNOWLEDGE: self.text_constructor(
-                knowledge_source=self.knowledge_base.select_by_full_knowledge
-            ),
-        }
+        return cls(
+            knowledge_base=knowledge_base,
+            answer_placeholder=answer_placeholder,
+            text_constructor=text_constructor,
+            markov_texts={
+                cls.Strategy.BY_CURRENT_CHAT: text_constructor(
+                    knowledge_source=functools.partial(knowledge_base.select_by_chat, chat_id)
+                ),
+                cls.Strategy.BY_FULL_KNOWLEDGE: text_constructor(
+                    knowledge_source=knowledge_base.select_by_full_knowledge
+                ),
+            },
+        )
 
     async def conceive(self):
         return await self._form_message(
