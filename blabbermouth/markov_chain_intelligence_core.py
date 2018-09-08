@@ -1,5 +1,6 @@
 import contextlib
 import enum
+import functools
 import random
 
 import attr
@@ -97,24 +98,22 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
 
     def __attrs_post_init__(self):
         chat_id = self.chat_id
-
-        self.markov_texts_by_strategy = {
-            p[0]: CachedMarkovText(
-                event_loop=self.event_loop,
-                worker=self.worker,
-                knowledge_source=p[1],
-                make_sentence_attempts=self.make_sentence_attempts,
-                text_lifespan=self.knowledge_lifespan,
-            )
-            for p in [
-                (self.Strategy.BY_CURRENT_CHAT, lambda _: self.knowledge_base.select_by_chat(chat_id)),
-                (
-                    self.Strategy.BY_CURRENT_USER,
-                    lambda dependency: self.knowledge_base.select_by_user(dependency["user"]),
-                ),
-                (self.Strategy.BY_FULL_KNOWLEDGE, lambda _: self.knowledge_base.select_by_full_knowledge()),
-            ]
-        }
+        text_constructor = functools.partial(
+            CachedMarkovText,
+            event_loop=self.event_loop,
+            worker=self.worker,
+            make_sentence_attempts=self.make_sentence_attempts,
+            text_lifespan=self.knowledge_lifespan,
+        )
+        self.markov_texts_by_strategy[self.Strategy.BY_CURRENT_CHAT] = text_constructor(
+            knowledge_source=lambda _: self.knowledge_base.select_by_chat(chat_id)
+        )
+        self.markov_texts_by_strategy[self.Strategy.BY_FULL_KNOWLEDGE] = text_constructor(
+            knowledge_source=lambda _: self.knowledge_base.select_by_full_knowledge()
+        )
+        self.markov_texts_by_strategy[self.Strategy.BY_CURRENT_USER] = text_constructor(
+            knowledge_source=lambda dependency: self.knowledge_base.select_by_user(dependency["user"])
+        )
 
     async def conceive(self):
         return await self._form_message(
