@@ -14,19 +14,25 @@ from markov_chain_intelligence_core import MarkovChainIntelligenceCore
 from mongo_knowledge_base import MongoKnowledgeBase
 from reddit_browser import RedditBrowser
 from reddit_chatter import RedditChatter
+from speaking_intelligence_core import SpeakingIntelligenceCore
 from util import config, log, query_detector
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--token", required=True)
+    parser.add_argument("--yandex-dev-api-key", required=True)
     parser.add_argument("--dev", action="store_true")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    config_env_overrides = {"is_prod": not args.dev, "token": args.token}
+    config_env_overrides = {
+        "is_prod": not args.dev,
+        "token": args.token,
+        "yandex_dev_api_key": args.yandex_dev_api_key,
+    }
     conf = config.load_config("config", "env.yaml", config_env_overrides)
 
     log.setup_logging(conf)
@@ -49,18 +55,27 @@ def main():
     markov_chain_worker = concurrent.futures.ThreadPoolExecutor(max_workers=5)
 
     def main_intelligence_core_constructor(chat_id):
+        markov_chain_core = MarkovChainIntelligenceCore.build(
+            event_loop=event_loop,
+            worker=markov_chain_worker,
+            chat_id=chat_id,
+            knowledge_base=knowledge_base,
+            knowledge_lifespan=datetime.timedelta(
+                minutes=conf["markov_chain_intelligence_core"]["knowledge_lifespan_minutes"]
+            ),
+            answer_placeholder=conf["markov_chain_intelligence_core"]["answer_placeholder"],
+            make_sentence_attempts=conf["markov_chain_intelligence_core"]["make_sentence_attempts"],
+        )
         return AggregatingIntelligenceCore(
             cores=[
-                MarkovChainIntelligenceCore.build(
-                    event_loop=event_loop,
-                    worker=markov_chain_worker,
-                    chat_id=chat_id,
-                    knowledge_base=knowledge_base,
-                    knowledge_lifespan=datetime.timedelta(
-                        minutes=conf["markov_chain_intelligence_core"]["knowledge_lifespan_minutes"]
-                    ),
-                    answer_placeholder=conf["markov_chain_intelligence_core"]["answer_placeholder"],
-                    make_sentence_attempts=conf["markov_chain_intelligence_core"]["make_sentence_attempts"],
+                markov_chain_core,
+                SpeakingIntelligenceCore(
+                    text_core=markov_chain_core,
+                    voice=conf["speaking_intelligence_core"]["voice"],
+                    lang=conf["speaking_intelligence_core"]["lang"],
+                    audio_format=conf["speaking_intelligence_core"]["audio_format"],
+                    api_url=conf["speaking_intelligence_core"]["api_url"],
+                    api_key=conf["yandex_dev_api_key"],
                 ),
                 RedditChatter(
                     top_post_comments=conf["reddit_chatter"]["top_post_comments"],
