@@ -102,12 +102,14 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
             make_sentence_attempts=self.make_sentence_attempts,
             text_lifespan=self.knowledge_lifespan,
         )
-        self.markov_texts[self.Strategy.BY_CURRENT_CHAT] = self.text_constructor(
-            knowledge_source=functools.partial(self.knowledge_base.select_by_chat, self.chat_id)
-        )
-        self.markov_texts[self.Strategy.BY_FULL_KNOWLEDGE] = self.text_constructor(
-            knowledge_source=self.knowledge_base.select_by_full_knowledge
-        )
+        self.markov_texts = {
+            self.Strategy.BY_CURRENT_CHAT: self.text_constructor(
+                knowledge_source=functools.partial(self.knowledge_base.select_by_chat, self.chat_id)
+            ),
+            self.Strategy.BY_FULL_KNOWLEDGE: self.text_constructor(
+                knowledge_source=self.knowledge_base.select_by_full_knowledge
+            ),
+        }
 
     async def conceive(self):
         return await self._form_message(
