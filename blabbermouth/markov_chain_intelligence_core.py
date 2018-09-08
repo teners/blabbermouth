@@ -77,7 +77,7 @@ class CachedMarkovText:
 
 
 @logged
-@attr.s(slots=True)
+@attr.s(slots=True, frozen=True)
 class MarkovChainIntelligenceCore(IntelligenceCore):
     class Strategy(enum.Enum):
         BY_CURRENT_CHAT = enum.auto()
