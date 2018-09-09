@@ -53,7 +53,7 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
         answer = await intelligence_core.respond(user=user, message=message.get("text", ""))
         if answer is None:
             self._log.info('Got "None" answer from intelligence core')
-            answer = self.answer_placeholder
+            answer = self._answer_placeholder
 
         await self._send_thought(answer)
 
