@@ -3,8 +3,10 @@ import random
 import attr
 
 from intelligence_core import IntelligenceCore
+from util.log import logged
 
 
+@logged
 @attr.s
 class AggregatingIntelligenceCore(IntelligenceCore):
     cores = attr.ib()
@@ -19,7 +21,11 @@ class AggregatingIntelligenceCore(IntelligenceCore):
         cores = self.cores.copy()
         random.shuffle(cores)
         for core in cores:
-            result = await coro(core)
-            if result is not None:
-                return result
+            try:
+                result = await coro(core)
+            except Exception as ex:
+                self._log.exception(ex)
+            else:
+                if result is not None:
+                    return result
         return None
