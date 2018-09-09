@@ -86,21 +86,11 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
         BY_FULL_KNOWLEDGE = enum.auto()
 
     knowledge_base = attr.ib(validator=attr.validators.instance_of(KnowledgeBase))
-    answer_placeholder = attr.ib()
     text_constructor = attr.ib()
     markov_texts = attr.ib()
 
     @classmethod
-    def build(
-        cls,
-        event_loop,
-        worker,
-        chat_id,
-        knowledge_base,
-        knowledge_lifespan,
-        make_sentence_attempts,
-        answer_placeholder,
-    ):
+    def build(cls, event_loop, worker, chat_id, knowledge_base, knowledge_lifespan, make_sentence_attempts):
         text_constructor = functools.partial(
             CachedMarkovText,
             event_loop=event_loop,
@@ -110,7 +100,6 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
         )
         return cls(
             knowledge_base=knowledge_base,
-            answer_placeholder=answer_placeholder,
             text_constructor=text_constructor,
             markov_texts={
                 cls.Strategy.BY_CURRENT_CHAT: text_constructor(
@@ -135,12 +124,11 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
                 self.Strategy.BY_CURRENT_USER,
                 self.Strategy.BY_FULL_KNOWLEDGE,
             ],
-            placeholder=self.answer_placeholder,
             user=user,
         )
         return thought.text(response) if response is not None else None
 
-    async def _form_message(self, strategies, placeholder=None, user=None):
+    async def _form_message(self, strategies, user=None):
         strategy = random.choice(strategies)
         if strategy == self.Strategy.BY_CURRENT_USER:
             text_key = (strategy, user)
@@ -153,5 +141,4 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
 
         self._log.info("Using text for {}".format(text_key))
 
-        sentence = await self.markov_texts[text_key].make_sentence()
-        return sentence if sentence is not None else placeholder
+        return await self.markov_texts[text_key].make_sentence()

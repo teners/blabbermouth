@@ -1,3 +1,2 @@
 knowledge_lifespan_minutes: 60
 make_sentence_attempts: 100
-answer_placeholder: {% if is_prod %} Лол {% else %} <None> {% endif %}

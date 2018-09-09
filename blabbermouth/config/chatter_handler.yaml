@@ -1,1 +1,2 @@
 conceive_interval_hours: 24
+answer_placeholder: {% if is_prod %} Лол {% else %} <None> {% endif %}

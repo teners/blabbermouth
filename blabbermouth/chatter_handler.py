@@ -3,6 +3,7 @@ import random
 
 import telepot
 
+from thought import text as thought_text
 from thought import Type as ThoughtType
 from util.chain import BrokenChain, check, not_none
 from util.log import logged
@@ -14,21 +15,23 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
     def __init__(
         self,
         *args,
+        event_loop,
         intelligence_registry,
         self_reference_detector,
         personal_query_detector,
         conceive_interval,
-        event_loop,
+        answer_placeholder,
         **kwargs
     ):
         super(ChatterHandler, self).__init__(*args, **kwargs)
 
+        self._event_loop = event_loop
         self._intelligence_registry = intelligence_registry
         self._self_reference_detector = self_reference_detector
         self._personal_quary_detector = personal_query_detector
-        self._event_loop = event_loop
         self._conceive_interval = conceive_interval
         self._conceive_timer = Timer(callback=self._conceive, interval=self._randomize_conceive_interval())
+        self._answer_placeholder = thought_text(answer_placeholder)
 
         self._log.info("Created {}".format(id(self)))
 
@@ -50,7 +53,7 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
         answer = await intelligence_core.respond(user=user, message=message.get("text", ""))
         if answer is None:
             self._log.info('Got "None" answer from intelligence core')
-            return
+            answer = self.answer_placeholder
 
         await self._send_thought(answer)
 

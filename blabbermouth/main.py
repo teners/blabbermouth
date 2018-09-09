@@ -63,7 +63,6 @@ def main():
             knowledge_lifespan=datetime.timedelta(
                 minutes=conf["markov_chain_intelligence_core"]["knowledge_lifespan_minutes"]
             ),
-            answer_placeholder=conf["markov_chain_intelligence_core"]["answer_placeholder"],
             make_sentence_attempts=conf["markov_chain_intelligence_core"]["make_sentence_attempts"],
         )
         return AggregatingIntelligenceCore(
@@ -122,13 +121,14 @@ def main():
                 per_chat_id(),
                 create_open,
                 chatter_handler.ChatterHandler,
+                event_loop=event_loop,
                 intelligence_registry=intelligence_registry,
                 self_reference_detector=query_detector.self_reference_detector(bot_name),
                 personal_query_detector=query_detector.personal_query_detector(bot_name),
                 conceive_interval=datetime.timedelta(
                     hours=conf["chatter_handler"]["conceive_interval_hours"]
                 ),
-                event_loop=event_loop,
+                answer_placeholder=conf["chatter_handler"]["answer_placeholder"],
                 timeout=telepot_http_timeout,
             ),
         ],
