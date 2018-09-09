@@ -79,7 +79,7 @@ def main():
                 RedditChatter(
                     top_post_comments=conf["reddit_chatter"]["top_post_comments"],
                     subreddits_of_interest=conf["reddit_chatter"]["subreddits_of_interest"],
-                    reddit_browser=RedditBrowser(
+                    reddit_browser=RedditBrowser.build(
                         reddit_url=conf["reddit_browser"]["reddit_url"], user_agent=user_agent
                     ),
                 ),

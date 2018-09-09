@@ -2,6 +2,7 @@ import enum
 import json
 
 import aiohttp
+import attr
 
 
 class FeedSortType(enum.Enum):
@@ -11,15 +12,19 @@ class FeedSortType(enum.Enum):
     TOP = "top"
 
 
+@attr.s(slots=True, frozen=True)
 class RedditBrowser:
-    def __init__(self, reddit_url, user_agent):
-        self._reddit_url = reddit_url
-        self._client_headers = {"User-Agent": user_agent}
+    reddit_url = attr.ib()
+    request_headers = attr.ib()
+
+    @classmethod
+    def build(cls, reddit_url, user_agent):
+        return cls(reddit_url=reddit_url, request_headers={"User-Agent": user_agent})
 
     async def lookup_top_posts(self, subreddit, sort_type, limit):
-        url = "{}/r/{}/{}.json?limit={}".format(self._reddit_url, subreddit, sort_type.value, limit)
+        url = "{}/r/{}/{}.json?limit={}".format(self.reddit_url, subreddit, sort_type.value, limit)
 
-        async with aiohttp.ClientSession(headers=self._client_headers) as session:
+        async with aiohttp.ClientSession(headers=self.request_headers) as session:
             async with session.get(url) as response:
                 response_text = await response.text()
                 if response.status != 200:
