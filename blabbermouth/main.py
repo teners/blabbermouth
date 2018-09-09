@@ -52,94 +52,93 @@ async def main(event_loop):
         db_collection=conf["mongo_knowledge_base"]["db_collection"],
     )
 
+    http_session = aiohttp.ClientSession()
     markov_chain_worker = concurrent.futures.ThreadPoolExecutor(max_workers=5)
 
-    async with aiohttp.ClientSession() as http_session:
-
-        def main_intelligence_core_constructor(chat_id):
-            markov_chain_core = MarkovChainIntelligenceCore.build(
-                event_loop=event_loop,
-                worker=markov_chain_worker,
-                chat_id=chat_id,
-                knowledge_base=knowledge_base,
-                knowledge_lifespan=datetime.timedelta(
-                    minutes=conf["markov_chain_intelligence_core"]["knowledge_lifespan_minutes"]
+    def main_intelligence_core_constructor(chat_id):
+        markov_chain_core = MarkovChainIntelligenceCore.build(
+            event_loop=event_loop,
+            worker=markov_chain_worker,
+            chat_id=chat_id,
+            knowledge_base=knowledge_base,
+            knowledge_lifespan=datetime.timedelta(
+                minutes=conf["markov_chain_intelligence_core"]["knowledge_lifespan_minutes"]
+            ),
+            make_sentence_attempts=conf["markov_chain_intelligence_core"]["make_sentence_attempts"],
+        )
+        return AggregatingIntelligenceCore(
+            cores=[
+                markov_chain_core,
+                SpeakingIntelligenceCore(
+                    http_session=http_session,
+                    text_core=markov_chain_core,
+                    voice=conf["speaking_intelligence_core"]["voice"],
+                    lang=conf["speaking_intelligence_core"]["lang"],
+                    audio_format=conf["speaking_intelligence_core"]["audio_format"],
+                    api_url=conf["speaking_intelligence_core"]["api_url"],
+                    api_key=conf["yandex_dev_api_key"],
                 ),
-                make_sentence_attempts=conf["markov_chain_intelligence_core"]["make_sentence_attempts"],
-            )
-            return AggregatingIntelligenceCore(
-                cores=[
-                    markov_chain_core,
-                    SpeakingIntelligenceCore(
+                RedditChatter(
+                    top_post_comments=conf["reddit_chatter"]["top_post_comments"],
+                    subreddits_of_interest=conf["reddit_chatter"]["subreddits_of_interest"],
+                    reddit_browser=RedditBrowser.build(
                         http_session=http_session,
-                        text_core=markov_chain_core,
-                        voice=conf["speaking_intelligence_core"]["voice"],
-                        lang=conf["speaking_intelligence_core"]["lang"],
-                        audio_format=conf["speaking_intelligence_core"]["audio_format"],
-                        api_url=conf["speaking_intelligence_core"]["api_url"],
-                        api_key=conf["yandex_dev_api_key"],
+                        reddit_url=conf["reddit_browser"]["reddit_url"],
+                        user_agent=user_agent,
                     ),
-                    RedditChatter(
-                        top_post_comments=conf["reddit_chatter"]["top_post_comments"],
-                        subreddits_of_interest=conf["reddit_chatter"]["subreddits_of_interest"],
-                        reddit_browser=RedditBrowser.build(
-                            http_session=http_session,
-                            reddit_url=conf["reddit_browser"]["reddit_url"],
-                            user_agent=user_agent,
-                        ),
-                    ),
-                ]
-            )
-
-        intelligence_registry = chat_intelligence.IntelligenceRegistry(
-            core_constructor=main_intelligence_core_constructor
+                ),
+            ]
         )
 
-        bot = telepot.aio.DelegatorBot(
-            bot_token,
-            [
-                pave_event_space()(
-                    per_chat_id(),
-                    create_open,
-                    deaf_detector.DeafDetectorHandler,
-                    event_loop=event_loop,
-                    timeout=telepot_http_timeout,
-                ),
-                pave_event_space()(
-                    per_chat_id(),
-                    create_open,
-                    chat_intelligence.ChatIntelligence,
-                    intelligence_registry=intelligence_registry,
-                    timeout=telepot_http_timeout,
-                ),
-                pave_event_space()(
-                    per_chat_id(),
-                    create_open,
-                    learning_handler.LearningHandler,
-                    knowledge_base=knowledge_base,
-                    self_reference_detector=query_detector.self_reference_detector(bot_name),
-                    bot_name=bot_name,
-                    event_loop=event_loop,
-                    timeout=telepot_http_timeout,
-                ),
-                pave_event_space()(
-                    per_chat_id(),
-                    create_open,
-                    chatter_handler.ChatterHandler,
-                    event_loop=event_loop,
-                    intelligence_registry=intelligence_registry,
-                    self_reference_detector=query_detector.self_reference_detector(bot_name),
-                    personal_query_detector=query_detector.personal_query_detector(bot_name),
-                    conceive_interval=datetime.timedelta(
-                        hours=conf["chatter_handler"]["conceive_interval_hours"]
-                    ),
-                    answer_placeholder=conf["chatter_handler"]["answer_placeholder"],
-                    timeout=telepot_http_timeout,
-                ),
-            ],
-        )
+    intelligence_registry = chat_intelligence.IntelligenceRegistry(
+        core_constructor=main_intelligence_core_constructor
+    )
 
-        await MessageLoop(bot).run_forever()
+    bot = telepot.aio.DelegatorBot(
+        bot_token,
+        [
+            pave_event_space()(
+                per_chat_id(),
+                create_open,
+                deaf_detector.DeafDetectorHandler,
+                event_loop=event_loop,
+                timeout=telepot_http_timeout,
+            ),
+            pave_event_space()(
+                per_chat_id(),
+                create_open,
+                chat_intelligence.ChatIntelligence,
+                intelligence_registry=intelligence_registry,
+                timeout=telepot_http_timeout,
+            ),
+            pave_event_space()(
+                per_chat_id(),
+                create_open,
+                learning_handler.LearningHandler,
+                knowledge_base=knowledge_base,
+                self_reference_detector=query_detector.self_reference_detector(bot_name),
+                bot_name=bot_name,
+                event_loop=event_loop,
+                timeout=telepot_http_timeout,
+            ),
+            pave_event_space()(
+                per_chat_id(),
+                create_open,
+                chatter_handler.ChatterHandler,
+                event_loop=event_loop,
+                intelligence_registry=intelligence_registry,
+                self_reference_detector=query_detector.self_reference_detector(bot_name),
+                personal_query_detector=query_detector.personal_query_detector(bot_name),
+                conceive_interval=datetime.timedelta(
+                    hours=conf["chatter_handler"]["conceive_interval_hours"]
+                ),
+                answer_placeholder=conf["chatter_handler"]["answer_placeholder"],
+                timeout=telepot_http_timeout,
+            ),
+        ],
+    )
+
+    await MessageLoop(bot).run_forever()
 
 
 def run_main():
