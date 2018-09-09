@@ -2,6 +2,7 @@ import random
 
 import attr
 
+import thought
 from intelligence_core import IntelligenceCore
 from reddit_browser import FeedSortType, RedditBrowser
 from util.log import logged
@@ -29,7 +30,7 @@ class RedditChatter(IntelligenceCore):
 
         self._log.info("Top post of choice is {}".format(top_post))
 
-        return self._format_top_post_message(top_post)
+        return thought.text(self._format_top_post_message(top_post))
 
     async def respond(self, *_):
         return None

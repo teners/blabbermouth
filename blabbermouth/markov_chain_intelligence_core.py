@@ -6,6 +6,7 @@ import random
 import attr
 import markovify
 
+import thought
 from intelligence_core import IntelligenceCore
 from knowledge_base import KnowledgeBase
 from util.lifespan import Lifespan
@@ -122,12 +123,13 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
         )
 
     async def conceive(self):
-        return await self._form_message(
+        response = await self._form_message(
             strategies=[self.Strategy.BY_CURRENT_CHAT, self.Strategy.BY_FULL_KNOWLEDGE]
         )
+        return thought.text(response) if response is not None else None
 
     async def respond(self, user, message):
-        return await self._form_message(
+        response = await self._form_message(
             strategies=[
                 self.Strategy.BY_CURRENT_CHAT,
                 self.Strategy.BY_CURRENT_USER,
@@ -136,6 +138,7 @@ class MarkovChainIntelligenceCore(IntelligenceCore):
             placeholder=self.answer_placeholder,
             user=user,
         )
+        return thought.text(response) if response is not None else None
 
     async def _form_message(self, strategies, placeholder=None, user=None):
         strategy = random.choice(strategies)
