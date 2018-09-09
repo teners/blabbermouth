@@ -2,7 +2,6 @@ import enum
 import random
 import io
 
-import aiohttp
 import attr
 
 import thought
@@ -19,6 +18,7 @@ class Emotion(enum.Enum):
 @logged
 @attr.s(slots=True, frozen=True)
 class SpeakingIntelligenceCore(IntelligenceCore):
+    http_session = attr.ib()
     text_core = attr.ib(validator=attr.validators.instance_of(IntelligenceCore))
     voice = attr.ib()
     lang = attr.ib()
@@ -48,13 +48,12 @@ class SpeakingIntelligenceCore(IntelligenceCore):
 
         self._log.info("Using {} emotion".format(emotion))
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                self.api_url, params=self._make_request_params(text=text, emotion=emotion)
-            ) as response:
-                response_text = await response.read()
-                if response.status != 200:
-                    raise Exception("Got unwanted response {}: {}".format(response.status, response_text))
+        async with self.http_session.get(
+            self.api_url, params=self._make_request_params(text=text, emotion=emotion)
+        ) as response:
+            response_text = await response.read()
+            if response.status != 200:
+                raise Exception("Got unwanted response {}: {}".format(response.status, response_text))
 
         return thought.speech(io.BytesIO(response_text))
 
