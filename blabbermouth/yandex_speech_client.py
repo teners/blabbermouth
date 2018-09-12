@@ -27,5 +27,4 @@ class YandexSpeechClient:
         async with self._http_session.get(self._api_url, params=params) as response:
             if response.status != 200:
                 raise Exception("Got unwanted response {}: {}".format(response.status, await response.text()))
-
-        return response.read()
+            return await response.read()
