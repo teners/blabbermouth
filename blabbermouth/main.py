@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import concurrent.futures
 import datetime
+import functools
 
 import aiohttp
 import telepot
@@ -28,6 +29,48 @@ def parse_args():
     parser.add_argument("--yandex-dev-api-key", required=True)
     parser.add_argument("--dev", action="store_true")
     return parser.parse_args()
+
+
+def make_main_intelligence_core(
+    chat_id, conf, event_loop, knowledge_base, http_session, user_agent, markov_chain_worker
+):
+    markov_chain_core = MarkovChainIntelligenceCore.build(
+        event_loop=event_loop,
+        worker=markov_chain_worker,
+        chat_id=chat_id,
+        knowledge_base=knowledge_base,
+        knowledge_lifespan=datetime.timedelta(
+            minutes=conf["markov_chain_intelligence_core"]["knowledge_lifespan_minutes"]
+        ),
+        make_sentence_attempts=conf["markov_chain_intelligence_core"]["make_sentence_attempts"],
+    )
+    return AggregatingIntelligenceCore(
+        cores=[
+            markov_chain_core,
+            SpeakingIntelligenceCore(
+                text_core=markov_chain_core,
+                speech_client=YandexSpeechClient(
+                    http_session=http_session,
+                    api_key=conf["yandex_dev_api_key"],
+                    api_url=conf["yandex_speech_client"]["api_url"],
+                ),
+                voice=conf["speaking_intelligence_core"]["voice"],
+                lang=conf["speaking_intelligence_core"]["lang"],
+                audio_format=conf["speaking_intelligence_core"]["audio_format"],
+                emotions=list(SpeechEmotion),
+            ),
+            RedditChatter(
+                reddit_browser=RedditBrowser.build(
+                    http_session=http_session,
+                    reddit_url=conf["reddit_browser"]["reddit_url"],
+                    user_agent=user_agent,
+                ),
+                top_post_comments=conf["reddit_chatter"]["top_post_comments"],
+                subreddits_of_interest=conf["reddit_chatter"]["subreddits_of_interest"],
+                sort_types=[RedditFeedSortType.BEST, RedditFeedSortType.HOT, RedditFeedSortType.TOP],
+            ),
+        ]
+    )
 
 
 async def main(event_loop):
@@ -58,47 +101,16 @@ async def main(event_loop):
     http_session = aiohttp.ClientSession()
     markov_chain_worker = concurrent.futures.ThreadPoolExecutor(max_workers=5)
 
-    def main_intelligence_core_constructor(chat_id):
-        markov_chain_core = MarkovChainIntelligenceCore.build(
-            event_loop=event_loop,
-            worker=markov_chain_worker,
-            chat_id=chat_id,
-            knowledge_base=knowledge_base,
-            knowledge_lifespan=datetime.timedelta(
-                minutes=conf["markov_chain_intelligence_core"]["knowledge_lifespan_minutes"]
-            ),
-            make_sentence_attempts=conf["markov_chain_intelligence_core"]["make_sentence_attempts"],
-        )
-        return AggregatingIntelligenceCore(
-            cores=[
-                markov_chain_core,
-                SpeakingIntelligenceCore(
-                    text_core=markov_chain_core,
-                    speech_client=YandexSpeechClient(
-                        http_session=http_session,
-                        api_key=conf["yandex_dev_api_key"],
-                        api_url=conf["yandex_speech_client"]["api_url"],
-                    ),
-                    voice=conf["speaking_intelligence_core"]["voice"],
-                    lang=conf["speaking_intelligence_core"]["lang"],
-                    audio_format=conf["speaking_intelligence_core"]["audio_format"],
-                    emotions=list(SpeechEmotion),
-                ),
-                RedditChatter(
-                    reddit_browser=RedditBrowser.build(
-                        http_session=http_session,
-                        reddit_url=conf["reddit_browser"]["reddit_url"],
-                        user_agent=user_agent,
-                    ),
-                    top_post_comments=conf["reddit_chatter"]["top_post_comments"],
-                    subreddits_of_interest=conf["reddit_chatter"]["subreddits_of_interest"],
-                    sort_types=[RedditFeedSortType.BEST, RedditFeedSortType.HOT, RedditFeedSortType.TOP],
-                ),
-            ]
-        )
-
     intelligence_registry = chat_intelligence.IntelligenceRegistry(
-        core_constructor=main_intelligence_core_constructor
+        core_constructor=functools.partial(
+            make_main_intelligence_core,
+            conf=conf,
+            event_loop=event_loop,
+            knowledge_base=knowledge_base,
+            http_session=http_session,
+            user_agent=user_agent,
+            markov_chain_worker=markov_chain_worker,
+        )
     )
 
     bot = telepot.aio.DelegatorBot(
