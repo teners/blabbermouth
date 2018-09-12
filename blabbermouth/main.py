@@ -14,6 +14,7 @@ from aggregating_intelligence_core import AggregatingIntelligenceCore
 from markov_chain_intelligence_core import MarkovChainIntelligenceCore
 from mongo_knowledge_base import MongoKnowledgeBase
 from reddit_browser import RedditBrowser
+from reddit_browser import FeedSortType as RedditFeedSortType
 from reddit_chatter import RedditChatter
 from speaking_intelligence_core import SpeakingIntelligenceCore
 from util import config, log, query_detector
@@ -84,13 +85,14 @@ async def main(event_loop):
                     emotions=list(SpeechEmotion),
                 ),
                 RedditChatter(
-                    top_post_comments=conf["reddit_chatter"]["top_post_comments"],
-                    subreddits_of_interest=conf["reddit_chatter"]["subreddits_of_interest"],
                     reddit_browser=RedditBrowser.build(
                         http_session=http_session,
                         reddit_url=conf["reddit_browser"]["reddit_url"],
                         user_agent=user_agent,
                     ),
+                    top_post_comments=conf["reddit_chatter"]["top_post_comments"],
+                    subreddits_of_interest=conf["reddit_chatter"]["subreddits_of_interest"],
+                    sort_types=[RedditFeedSortType.BEST, RedditFeedSortType.HOT, RedditFeedSortType.TOP],
                 ),
             ]
         )

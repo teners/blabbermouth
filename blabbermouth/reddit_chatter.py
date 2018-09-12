@@ -4,17 +4,16 @@ import attr
 
 import thought
 from intelligence_core import IntelligenceCore
-from reddit_browser import FeedSortType, RedditBrowser
 from util.log import logged
 
 
 @logged
 @attr.s(slots=True)
 class RedditChatter(IntelligenceCore):
+    _reddit_browser = attr.ib()
     _top_post_comments = attr.ib()
     _subreddits_of_interest = attr.ib()
-    _reddit_browser = attr.ib(attr.validators.instance_of(RedditBrowser))
-    _sort_types = attr.ib(factory=lambda: list(FeedSortType))
+    _sort_types = attr.ib()
 
     async def conceive(self):
         subreddit = random.choice(self._subreddits_of_interest)
