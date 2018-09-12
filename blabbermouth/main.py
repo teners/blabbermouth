@@ -17,6 +17,8 @@ from reddit_browser import RedditBrowser
 from reddit_chatter import RedditChatter
 from speaking_intelligence_core import SpeakingIntelligenceCore
 from util import config, log, query_detector
+from yandex_speech_client import Emotion as SpeechEmotion
+from yandex_speech_client import YandexSpeechClient
 
 
 def parse_args():
@@ -70,13 +72,16 @@ async def main(event_loop):
             cores=[
                 markov_chain_core,
                 SpeakingIntelligenceCore(
-                    http_session=http_session,
                     text_core=markov_chain_core,
+                    speech_client=YandexSpeechClient(
+                        http_session=http_session,
+                        api_key=conf["yandex_dev_api_key"],
+                        api_url=conf["yandex_speech_client"]["api_url"],
+                    ),
                     voice=conf["speaking_intelligence_core"]["voice"],
                     lang=conf["speaking_intelligence_core"]["lang"],
                     audio_format=conf["speaking_intelligence_core"]["audio_format"],
-                    api_url=conf["speaking_intelligence_core"]["api_url"],
-                    api_key=conf["yandex_dev_api_key"],
+                    emotions=list(SpeechEmotion),
                 ),
                 RedditChatter(
                     top_post_comments=conf["reddit_chatter"]["top_post_comments"],
