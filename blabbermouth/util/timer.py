@@ -28,5 +28,5 @@ class Timer:
 
     async def _work(self):
         while self._enabled:
-            await asyncio.sleep(self.interval.seconds)
+            await asyncio.sleep(self.interval.total_seconds())
             await self._callback()
