@@ -1,4 +1,3 @@
 voice: oksana
 lang: ru-RU
 audio_format: mp3
-api_url: https://tts.voicetech.yandex.net/generate

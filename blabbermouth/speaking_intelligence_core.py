@@ -1,4 +1,3 @@
-import enum
 import random
 import io
 
@@ -10,23 +9,15 @@ from util.chain import BrokenChain, not_none
 from util.log import logged
 
 
-class Emotion(enum.Enum):
-    NEUTRAL = "neutral"
-    GOOD = "good"
-    EVIL = "evil"
-
-
 @logged
 @attr.s(slots=True, frozen=True)
 class SpeakingIntelligenceCore(IntelligenceCore):
-    http_session = attr.ib()
     text_core = attr.ib(validator=attr.validators.instance_of(IntelligenceCore))
+    speech_client = attr.ib()
     voice = attr.ib()
     lang = attr.ib()
     audio_format = attr.ib()
-    api_url = attr.ib()
-    api_key = attr.ib()
-    emotions = attr.ib(factory=lambda: list(Emotion))
+    emotions = attr.ib()
 
     async def conceive(self):
         try:
@@ -47,14 +38,10 @@ class SpeakingIntelligenceCore(IntelligenceCore):
 
         self._log.info("Using {} emotion".format(emotion))
 
-        async with self.http_session.get(
-            self.api_url, params=self._make_request_params(text=text, emotion=emotion)
-        ) as response:
-            response_text = await response.read()
-            if response.status != 200:
-                raise Exception("Got unwanted response {}: {}".format(response.status, response_text))
-
-        return thought.speech(io.BytesIO(response_text))
+        response = await self.speech_client.vocalize(
+            text=text, voice=self.voice, lang=self.lang, audio_format=self.audio_format, emotion=emotion
+        )
+        return thought.speech(io.BytesIO(await response))
 
     @staticmethod
     def _extract_text(core_response):
@@ -63,13 +50,3 @@ class SpeakingIntelligenceCore(IntelligenceCore):
                 "Wrapped core generated unexpected thought type: {}".format(core_response.thought_type)
             )
         return core_response.payload
-
-    def _make_request_params(self, text, emotion):
-        return {
-            "speaker": self.voice,
-            "format": self.audio_format,
-            "key": self.api_key,
-            "lang": self.lang,
-            "emotion": emotion.value,
-            "text": text,
-        }
