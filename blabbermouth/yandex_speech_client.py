@@ -9,7 +9,7 @@ class Emotion(enum.Enum):
     EVIL = "evil"
 
 
-@attr.s(slots=True, frozen=True)
+@attr.s(slots=True)
 class YandexSpeechClient:
     _http_session = attr.ib()
     _api_url = attr.ib()

@@ -4,28 +4,29 @@ import datetime
 import attr
 
 
-@attr.s
+@attr.s(slots=True)
 class Timer:
-    callback = attr.ib()
+    _callback = attr.ib()
+    _task = attr.ib(default=None)
+    _enabled = attr.ib(default=True)
+
     interval = attr.ib(attr.validators.instance_of(datetime.timedelta))
-    task = attr.ib(default=None)
-    enabled = attr.ib(default=True)
 
     def __attrs_post_init__(self):
-        self.task = asyncio.ensure_future(self._work())
-        self.enabled = True
+        self._task = asyncio.ensure_future(self._work())
+        self._enabled = True
 
     def enable(self):
         self.disable()
 
-        self.task = asyncio.ensure_future(self._work())
-        self.enabled = True
+        self._task = asyncio.ensure_future(self._work())
+        self._enabled = True
 
     def disable(self):
-        self.task.cancel()
-        self.enabled = False
+        self._task.cancel()
+        self._enabled = False
 
     async def _work(self):
-        while self.enabled:
+        while self._enabled:
             await asyncio.sleep(self.interval.seconds)
-            await self.callback()
+            await self._callback()

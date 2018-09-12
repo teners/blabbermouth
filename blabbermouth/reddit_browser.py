@@ -11,11 +11,11 @@ class FeedSortType(enum.Enum):
     TOP = "top"
 
 
-@attr.s(slots=True, frozen=True)
+@attr.s(slots=True)
 class RedditBrowser:
-    http_session = attr.ib()
-    reddit_url = attr.ib()
-    request_headers = attr.ib()
+    _http_session = attr.ib()
+    _reddit_url = attr.ib()
+    _request_headers = attr.ib()
 
     @classmethod
     def build(cls, http_session, reddit_url, user_agent):
@@ -24,9 +24,9 @@ class RedditBrowser:
         )
 
     async def lookup_top_posts(self, subreddit, sort_type, limit):
-        url = "{}/r/{}/{}.json?limit={}".format(self.reddit_url, subreddit, sort_type.value, limit)
+        url = "{}/r/{}/{}.json?limit={}".format(self._reddit_url, subreddit, sort_type.value, limit)
 
-        async with self.http_session.get(url, headers=self.request_headers) as response:
+        async with self._http_session.get(url, headers=self._request_headers) as response:
             response_text = await response.text()
             if response.status != 200:
                 raise Exception("Got unwanted response {}: {}".format(response.status, response_text))

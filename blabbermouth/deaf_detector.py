@@ -8,14 +8,17 @@ from util.log import logged
 
 
 @logged
+@attr.s(slots=True)
 class PreviousMessageRetriever:
     @attr.s(slots=True, frozen=True)
     class Info:
         text = attr.ib()
         user = attr.ib()
 
-    def __init__(self):
-        self._previous_info = None
+    _previous_info = attr.ib(default=None)
+    _retrievers = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
         self._retrievers = [self._try_retrieve_from_reply, self._try_infer_from_previous_message]
 
     def retrieve(self, message, text, user):
@@ -51,13 +54,13 @@ class PreviousMessageRetriever:
 
 
 @logged
+@attr.s(slots=True)
 class DeafDetector:
     WHAT_REGEX = re.compile(r"^([ч|ш]т?[о|а|ё|е]|ч[е|и][г|в]о)(\s(блять|бля|нахуй))?\.?$", re.IGNORECASE)
 
     TO_THIRD_CONVERSION_MAP = {"я": "Он", "меня": "Его", "мне": "Ему", "мной": "Им"}
 
-    def __init__(self):
-        self._previous_message_retriever = PreviousMessageRetriever()
+    _previous_message_retriever = attr.ib(factory=PreviousMessageRetriever)
 
     def try_reply(self, message):
         try:

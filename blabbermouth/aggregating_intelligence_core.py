@@ -7,9 +7,9 @@ from util.log import logged
 
 
 @logged
-@attr.s
+@attr.s(slots=True)
 class AggregatingIntelligenceCore(IntelligenceCore):
-    cores = attr.ib()
+    _cores = attr.ib()
 
     async def conceive(self):
         return await self._try_cores(lambda core: core.conceive())
@@ -18,7 +18,7 @@ class AggregatingIntelligenceCore(IntelligenceCore):
         return await self._try_cores(lambda core: core.respond(user, message))
 
     async def _try_cores(self, coro):
-        cores = self.cores.copy()
+        cores = self._cores.copy()
         random.shuffle(cores)
         for core in cores:
             try:

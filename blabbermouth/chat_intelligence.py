@@ -4,16 +4,16 @@ import telepot
 from util.log import logged
 
 
-@attr.s
+@attr.s(slots=True)
 class IntelligenceRegistry:
-    core_constructor = attr.ib()
-    cores = attr.ib(factory=dict)
+    _core_constructor = attr.ib()
+    _cores = attr.ib(factory=dict)
 
     def create_core(self, chat_id):
-        self.cores[chat_id] = self.core_constructor(chat_id)
+        self._cores[chat_id] = self._core_constructor(chat_id)
 
     def get_core(self, chat_id):
-        return self.cores[chat_id]
+        return self._cores[chat_id]
 
 
 @logged
