@@ -5,7 +5,7 @@ import attr
 
 import thought
 from intelligence_core import IntelligenceCore
-from util.chain import BrokenChain, not_none
+from util.chain import chained, not_none
 from util.log import logged
 
 
@@ -19,19 +19,15 @@ class SpeakingIntelligenceCore(IntelligenceCore):
     _audio_format = attr.ib()
     _emotions = attr.ib()
 
+    @chained
     async def conceive(self):
-        try:
-            return await self._make_voice(self._extract_text(not_none(await self._text_core.conceive())))
-        except BrokenChain:
-            return None
+        return await self._make_voice(self._extract_text(not_none(await self._text_core.conceive())))
 
+    @chained
     async def respond(self, user, message):
-        try:
-            return await self._make_voice(
-                self._extract_text(not_none(await self._text_core.respond(user, message)))
-            )
-        except BrokenChain:
-            return None
+        return await self._make_voice(
+            self._extract_text(not_none(await self._text_core.respond(user, message)))
+        )
 
     async def _make_voice(self, text):
         emotion = random.choice(self._emotions)

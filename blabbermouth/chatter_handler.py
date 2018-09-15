@@ -5,7 +5,7 @@ import telepot
 
 from thought import text as thought_text
 from thought import Type as ThoughtType
-from util.chain import BrokenChain, check, not_none
+from util.chain import chained, check, not_none
 from util.log import logged
 from util.timer import Timer
 
@@ -38,13 +38,11 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
     async def on_chat_message(self, message):
         self._event_loop.create_task(self._on_chat_message(message))
 
+    @chained
     async def _on_chat_message(self, message):
-        try:
-            check(self._self_reference_detector(message))
-            source = not_none(message.get("from"))
-            user = not_none(source.get("username"))
-        except BrokenChain:
-            return
+        check(self._self_reference_detector(message))
+        source = not_none(message.get("from"))
+        user = not_none(source.get("username"))
 
         self._log.info("User {} in chat {} is talking to me".format(user, self.chat_id))
 
