@@ -45,7 +45,7 @@ class SpeakingIntelligenceCore(IntelligenceCore):
 
     @staticmethod
     def _extract_text(core_response):
-        if core_response.thought_type is not core_response.Type.TEXT:
+        if core_response.thought_type is not thought.Type.TEXT:
             raise ValueError(
                 "Wrapped core generated unexpected thought type: {}".format(core_response.thought_type)
             )
