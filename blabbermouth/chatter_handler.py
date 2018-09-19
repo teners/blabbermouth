@@ -1,8 +1,11 @@
 import datetime
+import functools
 import random
 
 import telepot
 
+from callback_query import CallbackQuery
+from markup import InlineButton
 from thought import text as thought_text
 from thought import Type as ThoughtType
 from util.chain import chained, check, not_none
@@ -17,21 +20,27 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
         *args,
         event_loop,
         intelligence_registry,
+        bot_accessor,
         self_reference_detector,
         personal_query_detector,
         conceive_interval,
+        callback_lifespan,
         answer_placeholder,
         **kwargs
     ):
-        super(ChatterHandler, self).__init__(*args, **kwargs)
+        super(ChatterHandler, self).__init__(*args, include_callback_query=True, **kwargs)
 
         self._event_loop = event_loop
         self._intelligence_registry = intelligence_registry
+        self._bot_accessor = bot_accessor
         self._self_reference_detector = self_reference_detector
         self._personal_quary_detector = personal_query_detector
         self._conceive_interval = conceive_interval
         self._conceive_timer = Timer(callback=self._conceive, interval=self._randomize_conceive_interval())
         self._answer_placeholder = thought_text(answer_placeholder)
+
+        self._callback_query = CallbackQuery(callback_lifespan=callback_lifespan)
+        self.on_callback_query = self._callback_query.on_callback_query
 
         self._log.info("Created {}".format(id(self)))
 
@@ -75,10 +84,21 @@ class ChatterHandler(telepot.aio.helper.ChatHandler):
 
     async def _send_thought(self, thought):
         if thought.thought_type == ThoughtType.TEXT:
-            sender = self.sender.sendMessage
+            await self.sender.sendMessage(thought.payload)
         elif thought.thought_type == ThoughtType.SPEECH:
-            sender = self.sender.sendVoice
+            await self.sender.sendVoice(
+                thought.payload["speech_data"],
+                reply_markup=InlineButton(
+                    text="Read",
+                    callback_data=self._callback_query.register_handler(
+                        functools.partial(
+                            self._read_voice_message_handler, voice_text=thought.payload["text"]
+                        )
+                    ),
+                ),
+            )
         else:
             raise ValueError("Unexpected thought type: {}".format(thought.thought_type))
 
-        await sender(thought.payload)
+    async def _read_voice_message_handler(self, query_id, voice_text):
+        await self._bot_accessor().answerCallbackQuery(query_id, text=voice_text, show_alert=True)
