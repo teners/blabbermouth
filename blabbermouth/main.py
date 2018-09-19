@@ -10,7 +10,10 @@ import telepot
 from telepot.aio.loop import MessageLoop
 from telepot.aio.delegate import per_chat_id, create_open, pave_event_space
 
-import chatter_handler, chat_intelligence, deaf_detector, learning_handler
+import chat_intelligence
+import chatter_handler
+import deaf_detector
+import learning_handler
 from aggregating_intelligence_core import AggregatingIntelligenceCore
 from markov_chain_intelligence_core import MarkovChainIntelligenceCore
 from mongo_knowledge_base import MongoKnowledgeBase
