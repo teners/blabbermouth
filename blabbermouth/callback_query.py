@@ -13,7 +13,7 @@ class CallbackQuery:
         lifespan = attr.ib(converter=Lifespan)
 
     _callback_lifespan = attr.ib()
-    _callback_data_storage = attr.ib(default=dict)
+    _callback_data_storage = attr.ib(factory=dict)
 
     def register_handler(self, handler):
         callback_data = self.CallbackData(handler=handler, lifespan=self._callback_lifespan)
