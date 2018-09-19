@@ -37,7 +37,7 @@ class SpeakingIntelligenceCore(IntelligenceCore):
         response = await self._speech_client.vocalize(
             text=text, voice=self._voice, lang=self._lang, audio_format=self._audio_format, emotion=emotion
         )
-        return thought.speech(io.BytesIO(response))
+        return thought.speech(text_data=text, speech_data=io.BytesIO(response))
 
     @staticmethod
     def _extract_text(core_response):

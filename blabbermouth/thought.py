@@ -14,9 +14,9 @@ class _Thought:
     payload = attr.ib()
 
 
-def text(payload):
-    return _Thought(thought_type=Type.TEXT, payload=payload)
+def text(text_data):
+    return _Thought(thought_type=Type.TEXT, payload=text_data)
 
 
-def speech(payload):
-    return _Thought(thought_type=Type.SPEECH, payload=payload)
+def speech(text_data, speech_data):
+    return _Thought(thought_type=Type.SPEECH, payload={"text": text_data, "speech_data": speech_data})
