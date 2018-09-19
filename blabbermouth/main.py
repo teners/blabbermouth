@@ -36,7 +36,7 @@ def parse_args():
 
 
 def make_main_intelligence_core(
-    chat_id, conf, event_loop, knowledge_base, http_session, user_agent, markov_chain_worker
+    chat_id, event_loop, knowledge_base, http_session, user_agent, markov_chain_worker, conf
 ):
     markov_chain_core = MarkovChainIntelligenceCore.build(
         event_loop=event_loop,
@@ -89,6 +89,63 @@ class BotAccessor:
         return self._bot
 
 
+def create_bot(
+    bot_token,
+    bot_name,
+    bot_accessor,
+    event_loop,
+    intelligence_registry,
+    knowledge_base,
+    telepot_http_timeout,
+    conf,
+):
+    telepot.aio.DelegatorBot(
+        bot_token,
+        [
+            pave_event_space()(
+                per_chat_id(),
+                create_open,
+                deaf_detector.DeafDetectorHandler,
+                event_loop=event_loop,
+                timeout=telepot_http_timeout,
+            ),
+            pave_event_space()(
+                per_chat_id(),
+                create_open,
+                chat_intelligence.ChatIntelligence,
+                intelligence_registry=intelligence_registry,
+                timeout=telepot_http_timeout,
+            ),
+            pave_event_space()(
+                per_chat_id(),
+                create_open,
+                learning_handler.LearningHandler,
+                knowledge_base=knowledge_base,
+                self_reference_detector=query_detector.self_reference_detector(bot_name),
+                bot_name=bot_name,
+                event_loop=event_loop,
+                timeout=telepot_http_timeout,
+            ),
+            pave_event_space()(
+                per_chat_id(),
+                create_open,
+                chatter_handler.ChatterHandler,
+                event_loop=event_loop,
+                intelligence_registry=intelligence_registry,
+                bot_accessor=bot_accessor,
+                self_reference_detector=query_detector.self_reference_detector(bot_name),
+                personal_query_detector=query_detector.personal_query_detector(bot_name),
+                conceive_interval=datetime.timedelta(
+                    hours=conf["chatter_handler"]["conceive_interval_hours"]
+                ),
+                callback_lifespan=datetime.timedelta(days=conf["chatter_handler"]["callback_lifespan_days"]),
+                answer_placeholder=conf["chatter_handler"]["answer_placeholder"],
+                timeout=telepot_http_timeout,
+            ),
+        ],
+    )
+
+
 async def main(event_loop):
     args = parse_args()
     config_env_overrides = {
@@ -100,11 +157,6 @@ async def main(event_loop):
 
     log.setup_logging(conf)
 
-    bot_name = conf["bot_name"]
-    bot_token = conf["token"]
-    user_agent = conf["core"]["user_agent"]
-    telepot_http_timeout = conf["telepot"]["http_timeout"]
-
     telepot.aio.api.set_proxy(conf["core"]["proxy"])
 
     knowledge_base = MongoKnowledgeBase.build(
@@ -114,69 +166,29 @@ async def main(event_loop):
         db_collection=conf["mongo_knowledge_base"]["db_collection"],
     )
 
-    http_session = aiohttp.ClientSession()
-    markov_chain_worker = concurrent.futures.ThreadPoolExecutor(max_workers=5)
-
     intelligence_registry = chat_intelligence.IntelligenceRegistry(
         core_constructor=functools.partial(
             make_main_intelligence_core,
             conf=conf,
             event_loop=event_loop,
             knowledge_base=knowledge_base,
-            http_session=http_session,
-            user_agent=user_agent,
-            markov_chain_worker=markov_chain_worker,
+            http_session=aiohttp.ClientSession(),
+            user_agent=conf["core"]["user_agent"],
+            markov_chain_worker=concurrent.futures.ThreadPoolExecutor(max_workers=5),
         )
     )
 
     bot_accessor = BotAccessor()
     bot_accessor.set(
-        telepot.aio.DelegatorBot(
-            bot_token,
-            [
-                pave_event_space()(
-                    per_chat_id(),
-                    create_open,
-                    deaf_detector.DeafDetectorHandler,
-                    event_loop=event_loop,
-                    timeout=telepot_http_timeout,
-                ),
-                pave_event_space()(
-                    per_chat_id(),
-                    create_open,
-                    chat_intelligence.ChatIntelligence,
-                    intelligence_registry=intelligence_registry,
-                    timeout=telepot_http_timeout,
-                ),
-                pave_event_space()(
-                    per_chat_id(),
-                    create_open,
-                    learning_handler.LearningHandler,
-                    knowledge_base=knowledge_base,
-                    self_reference_detector=query_detector.self_reference_detector(bot_name),
-                    bot_name=bot_name,
-                    event_loop=event_loop,
-                    timeout=telepot_http_timeout,
-                ),
-                pave_event_space()(
-                    per_chat_id(),
-                    create_open,
-                    chatter_handler.ChatterHandler,
-                    event_loop=event_loop,
-                    intelligence_registry=intelligence_registry,
-                    bot_accessor=bot_accessor,
-                    self_reference_detector=query_detector.self_reference_detector(bot_name),
-                    personal_query_detector=query_detector.personal_query_detector(bot_name),
-                    conceive_interval=datetime.timedelta(
-                        hours=conf["chatter_handler"]["conceive_interval_hours"]
-                    ),
-                    callback_lifespan=datetime.timedelta(
-                        days=conf["chatter_handler"]["callback_lifespan_days"]
-                    ),
-                    answer_placeholder=conf["chatter_handler"]["answer_placeholder"],
-                    timeout=telepot_http_timeout,
-                ),
-            ],
+        create_bot(
+            bot_token=conf["token"],
+            bot_name=conf["bot_name"],
+            bot_accessor=bot_accessor,
+            event_loop=event_loop,
+            intelligence_registry=intelligence_registry,
+            knowledge_base=knowledge_base,
+            telepot_http_timeout=conf["telepot"]["http_timeout"],
+            conf=conf,
         )
     )
 
