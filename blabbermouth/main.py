@@ -9,9 +9,9 @@ import telepot
 
 from telepot.aio.loop import MessageLoop
 
+import bot_factory
 import chat_intelligence
-from bot_factory import build as Bot
-from intelligence_core_factory import build as MainIntelligenceCore
+import intelligence_core_factory
 from mongo_knowledge_base import MongoKnowledgeBase
 from util import config, log
 
@@ -58,7 +58,7 @@ async def main(event_loop):
 
     intelligence_registry = chat_intelligence.IntelligenceRegistry(
         core_constructor=functools.partial(
-            MainIntelligenceCore,
+            intelligence_core_factory.build,
             event_loop=event_loop,
             knowledge_base=knowledge_base,
             http_session=aiohttp.ClientSession(),
@@ -70,7 +70,7 @@ async def main(event_loop):
 
     bot_accessor = BotAccessor()
     bot_accessor.set(
-        Bot(
+        bot_factory.build(
             bot_token=conf["token"],
             bot_name=conf["bot_name"],
             bot_accessor=bot_accessor,
