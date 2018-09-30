@@ -6,7 +6,6 @@ import functools
 import aiohttp
 import attr
 import telepot
-
 from telepot.aio.loop import MessageLoop
 
 import bot_factory
